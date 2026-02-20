@@ -51,10 +51,9 @@ n8n-workflows/
 │
 ├── workflows/                  # All n8n workflow definitions as JSON
 │   ├── active/                 # Workflows currently active on the server
-│   │   ├── report-weekly.json
-│   │   └── sync-email-sheets.json
+│   │   └── test-manual-trigger-base.json
 │   └── draft/                  # Workflows in development, not yet deployed
-│       └── new-workflow.json
+│       └── (empty)
 ```
 
 ---
@@ -84,7 +83,7 @@ X-N8N-API-KEY: <your-api-key>
 
 ## Workflow JSON Structure
 
-Each workflow file in `workflows/` must follow the n8n JSON format. The minimal required fields are:
+Each workflow file in `workflows/` must follow the n8n JSON format. A typical local structure is:
 
 ```json
 {
@@ -99,7 +98,9 @@ Each workflow file in `workflows/` must follow the n8n JSON format. The minimal 
 }
 ```
 
-When deploying a new workflow via `POST /api/v1/workflows`, do **not** include the `id` field. When updating an existing workflow via `PUT`, include the `id` field and ensure it matches the endpoint.
+When deploying a new workflow via `POST /api/v1/workflows`, do **not** include the `id` field.
+When updating an existing workflow via `PUT`, include the `id` field and ensure it matches the endpoint.
+When calling the API, exclude read-only fields from payload (for example `tags`, if enforced as read-only by server version).
 
 ---
 
@@ -157,6 +158,6 @@ When deploying a new workflow via `POST /api/v1/workflows`, do **not** include t
 - Always check if a workflow with the same name already exists before creating a new one (to avoid duplicates)
 - Never hardcode sensitive values (API keys, passwords) inside workflow JSON — use n8n credentials instead
 - Respect variable scope split: local tooling uses `WSP8_N8N_BASE_URL`/`WSP8_N8N_API_KEY`; workflow runtime uses `WSP8_WP_SITE_URL`/`WSP8_APPROVAL_*`
-- If a node requires a credential, reference it by the credential name listed in the credentials map above
+- If a node requires a credential, reference the credential configured in n8n Credentials
 - When in doubt about a node's configuration, prefer a simpler, working structure over a complex broken one
 - After every deployment, verify the server returned a `200 OK` or `201 Created` response before committing

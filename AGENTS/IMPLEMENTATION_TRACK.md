@@ -213,10 +213,14 @@ Use both markers for each step:
      - n8n runtime: `WSP8_WP_SITE_URL`, `WSP8_APPROVAL_EMAIL`, `WSP8_APPROVAL_NAME`
   2. Configure n8n Credentials for WordPress, OpenAI, SMTP, and social platforms.
   3. Verify no secrets are present in repository and workflow JSON files.
+- Progress:
+  - [x] Activity 1 verified on 2026-02-20 (env vars documented by scope in project docs)
+  - [ ] Activity 2 pending (scheduled next session)
+  - [x] Activity 3 verified on 2026-02-20 (repository/workflow JSON secret scan clean)
 - Definition of done: scoped env vars are documented/configured and credentials are available in n8n.
 - Expected output: security baseline checklist completed.
 - Status: in-progress
-- Started on: YYYY-MM-DD
+- Started on: 2026-02-20
 - Completed on: YYYY-MM-DD
 
 ### Step 2 - MVP Skeleton (Detection + Extraction + AI + Approval + Twitter/X)

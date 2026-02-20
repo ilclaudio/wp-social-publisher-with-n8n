@@ -13,5 +13,6 @@ Run this section only once at session start, unless the user explicitly asks to 
 
 1. Read `AGENTS/PROJECT.md`.
 2. Read `AGENTS/GIT_WORKFLOW.md`.
-3. Read `README.md`.
-4. Report exactly: `Bootstrap completed` + the full list of files read (include `CLAUDE.md`, `AGENTS/PROJECT.md`, `AGENTS/GIT_WORKFLOW.md`, `README.md`).
+3. Read `AGENTS/IMPLEMENTATION_TRACK.md`.
+4. Read `README.md`.
+5. Report exactly: `Bootstrap completed` + the full list of files read (include `CLAUDE.md`, `AGENTS/PROJECT.md`, `AGENTS/GIT_WORKFLOW.md`, `AGENTS/IMPLEMENTATION_TRACK.md`, `README.md`).

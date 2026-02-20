@@ -1,7 +1,7 @@
-# Implementation Track
+# Implementation Track — WP Social Publisher Approval Flow
 
 ## 1) Project Objective
-Build an n8n automation that publishes notifications for new posts from a WordPress site to social channels with explicit approval gating by email before publishing. The workflow must check for new posts every hour, process each new post, generate a social message with AI (max 280 characters), include hashtag `#n8n`, and publish only after approval.
+Build an n8n automation that publishes notifications for new posts from a WordPress site to social channels with explicit approval gating by email before publishing. The workflow must check for new posts every hour (and on manual test trigger), identify new posts by publication date (`date_gmt`) with deduplication in n8n Data Store, process each new post, generate a social message with AI (max 280 characters), include hashtag `#n8n`, and publish only after approval.
 
 - Problem solved: manual and repetitive social publishing after WordPress post publication.
 - Target users: site owner/editor managing social publication from a single workflow.
@@ -20,13 +20,14 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
   - SMTP authenticated server (approval emails)
   - Social platform nodes/APIs (Twitter/X, Telegram, Instagram, Facebook)
 - Infrastructure constraints:
-  - Project env vars must use the `WSP8_` prefix.
-  - Development environment vars: `WSP8_N8N_BASE_URL`, `WSP8_N8N_API_KEY`.
-  - n8n runtime vars: `WSP8_WP_SITE_URL`, `WSP8_APPROVAL_EMAIL`, `WSP8_APPROVAL_NAME`.
-  - WordPress base URL must come from `WSP8_WP_SITE_URL`.
-  - Approval recipient email must come from `WSP8_APPROVAL_EMAIL`.
-  - Approval recipient display name must come from `WSP8_APPROVAL_NAME`.
+  - Project env vars must use the `WSPAF_` prefix.
+  - Development environment vars: `WSPAF_N8N_BASE_URL`, `WSPAF_N8N_API_KEY`.
+  - n8n runtime vars: `WSPAF_WP_SITE_URL`, `WSPAF_APPROVAL_EMAIL`, `WSPAF_APPROVAL_NAME`.
+  - WordPress base URL must come from `WSPAF_WP_SITE_URL`.
+  - Approval recipient email must come from `WSPAF_APPROVAL_EMAIL`.
+  - Approval recipient display name must come from `WSPAF_APPROVAL_NAME`.
   - Polling schedule: every hour.
+  - Trigger strategy: dual trigger in n8n (`Schedule Trigger` + `Manual Trigger` for tests).
 - Security/compliance constraints:
   - No username/password/token/API key in repository, Markdown, workflow JSON, or source files.
   - All secrets and account credentials must be stored only in n8n Credentials.
@@ -35,25 +36,29 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 - Operational constraints:
   - If no new posts are found, the workflow exits without side effects.
   - If approval is rejected, action is `skip` (no publish).
+  - New post detection must use WordPress publication date (`date_gmt`).
+  - Processed posts must be deduplicated with persistent n8n Data Store state keyed by WordPress post ID.
   - Build and release incrementally by channel priority: Twitter/X, Telegram, Instagram, Facebook.
 
 ## 3) Features (Text Backlog)
-### Feature 1 - Hourly WordPress New Post Detection
-- Description: every hour, query WordPress and detect posts not yet processed.
+### Feature 1 - Hourly + Manual WordPress New Post Detection
+- Description: on hourly schedule and manual test trigger, query WordPress and detect newly published posts using `date_gmt`, then filter already-processed items via n8n Data Store.
 - User value: automatic discovery of new content with no manual checks.
-- Expected inputs: `WSP8_WP_SITE_URL`, last processed marker/state.
+- Expected inputs: `WSPAF_WP_SITE_URL`, last processed publication marker, n8n Data Store processed-IDs set.
 - Expected outputs: list of new posts to process or empty list.
-- Dependencies: WordPress API availability; n8n scheduler.
+- Dependencies: WordPress API availability; n8n scheduler; n8n manual trigger; n8n Data Store.
 - Priority: MVP
 - Status: todo
 - Acceptance criteria:
-  1. Scheduler runs every hour.
-  2. If no new posts, workflow stops cleanly.
-  3. If new posts exist, each post enters processing loop.
+  1. Scheduler runs every hour and manual trigger can run on-demand for tests.
+  2. Detection uses WordPress `date_gmt` as the primary new-post criterion.
+  3. If no new posts, workflow stops cleanly.
+  4. If new posts exist, each post enters processing loop only once (Data Store dedup).
 - Minimum manual test:
-  1. Publish a new post and wait one run.
-  2. Verify post is detected once.
-  3. Run again without new posts and confirm no-op.
+  1. Publish a new post and wait one scheduled run.
+  2. Verify post is detected once and stored as processed in Data Store.
+  3. Run manual trigger without new posts and confirm no-op.
+  4. Re-run schedule/manual and confirm no duplicate processing of same post ID.
 
 ### Feature 2 - Post Data Extraction (content, featured image, URL)
 - Description: for each detected post, extract topic/content summary, featured image URL, and post URL.
@@ -92,7 +97,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 ### Feature 4 - Approval Email Workflow per Channel
 - Description: send approval request emails (Twitter/X, Telegram, Instagram, Facebook) to one recipient from env vars.
 - User value: editorial control before publishing.
-- Expected inputs: generated message + post media/link + `WSP8_APPROVAL_EMAIL` + `WSP8_APPROVAL_NAME`.
+- Expected inputs: generated message + post media/link + `WSPAF_APPROVAL_EMAIL` + `WSPAF_APPROVAL_NAME`.
 - Expected outputs: approval decision per channel (approve/reject).
 - Dependencies: authenticated SMTP credential in n8n.
 - Priority: MVP
@@ -178,7 +183,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 Group features by milestone.
 
 ### MVP
-- [ ] Feature 1 - Hourly WordPress New Post Detection
+- [ ] Feature 1 - Hourly + Manual WordPress New Post Detection
 - [ ] Feature 2 - Post Data Extraction
 - [ ] Feature 3 - AI Message Generation
 - [ ] Feature 4 - Approval Email Workflow
@@ -209,8 +214,8 @@ Use both markers for each step:
 - Objective: define env vars and secure credentials management in n8n before building business logic.
 - Activities:
   1. Define and document env vars by scope:
-     - development: `WSP8_N8N_BASE_URL`, `WSP8_N8N_API_KEY`
-     - n8n runtime: `WSP8_WP_SITE_URL`, `WSP8_APPROVAL_EMAIL`, `WSP8_APPROVAL_NAME`
+     - development: `WSPAF_N8N_BASE_URL`, `WSPAF_N8N_API_KEY`
+     - n8n runtime: `WSPAF_WP_SITE_URL`, `WSPAF_APPROVAL_EMAIL`, `WSPAF_APPROVAL_NAME`
   2. Configure n8n Credentials for WordPress, OpenAI, SMTP, and social platforms.
   3. Verify no secrets are present in repository and workflow JSON files.
 - Progress:
@@ -227,7 +232,7 @@ Use both markers for each step:
 - [ ] Step completion
 - Objective: deliver first end-to-end publish flow for Twitter/X with approval gate.
 - Activities:
-  1. Implement Features 1-4 (hourly check, extraction, AI generation, email approval).
+  1. Implement Features 1-4 (dual trigger check, `date_gmt` detection, Data Store dedup, extraction, AI generation, email approval).
   2. Implement Feature 5 with approve/reject branching.
   3. Validate no-op, reject-skip, approve-publish scenarios.
 - Definition of done: one approved WordPress post is published on Twitter/X.
@@ -280,7 +285,7 @@ Use both markers for each step:
 - Risk: duplicate publication of same post.
   - Impact: spam/duplicate content.
   - Probability: medium.
-  - Mitigation: persisted processed-post marker and idempotency checks.
+  - Mitigation: n8n Data Store persisted post-ID dedup and idempotency checks on every trigger path.
 
 ### External dependencies
 - Dependency: WordPress REST API reachability and schema.

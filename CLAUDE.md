@@ -1,6 +1,7 @@
 # CLAUDE.md
 
 Claude Code specific entry point.
+Project: `WP Social Publisher Approval Flow`.
 
 Read `AGENTS/AGENTS_README.md` for shared agent rules and file map.
 
@@ -8,7 +9,7 @@ Mandatory security reminder: never insert secrets in workflow JSON files.
 Synchronization rule: if you add instructions here, mirror them in `AGENTS.md`.
 
 ## Environment check preference
-When validating `WSP8_*` environment variables or testing n8n API connectivity, try PowerShell first (same context where variables are often set), then fall back to bash/WSL checks if needed.
+When validating `WSPAF_*` environment variables or testing n8n API connectivity, try PowerShell first (same context where variables are often set), then fall back to bash/WSL checks if needed.
 
 
 ## Session bootstrap

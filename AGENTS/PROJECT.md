@@ -1,4 +1,4 @@
-# N8N Workflow Management Project — Agent Context
+# WP Social Publisher Approval Flow — Agent Context
 
 ## Project Overview
 
@@ -17,17 +17,17 @@ For any branch/commit/PR activity, use `AGENTS/GIT_WORKFLOW.md` as the single so
 
 | Variable | Scope | Description |
 |---|---|---|
-| `WSP8_N8N_BASE_URL` | Development environment | Base URL of the n8n server (e.g. `http://192.168.1.100:5678`) |
-| `WSP8_N8N_API_KEY` | Development environment | API key for authenticating with the n8n REST API |
-| `WSP8_WP_SITE_URL` | n8n runtime | WordPress site base URL used to detect new posts |
-| `WSP8_APPROVAL_EMAIL` | n8n runtime | Approval recipient email address for channel publish decisions |
-| `WSP8_APPROVAL_NAME` | n8n runtime | Approval recipient display name used in emails |
+| `WSPAF_N8N_BASE_URL` | Development environment | Base URL of the n8n server (e.g. `http://192.168.1.100:5678`) |
+| `WSPAF_N8N_API_KEY` | Development environment | API key for authenticating with the n8n REST API |
+| `WSPAF_WP_SITE_URL` | n8n runtime | WordPress site base URL used to detect new posts |
+| `WSPAF_APPROVAL_EMAIL` | n8n runtime | Approval recipient email address for channel publish decisions |
+| `WSPAF_APPROVAL_NAME` | n8n runtime | Approval recipient display name used in emails |
 
-Project naming rule: all environment variables must use the `WSP8_` prefix.
+Project naming rule: all environment variables must use the `WSPAF_` prefix.
 
 Runtime split rule:
-- Use `WSP8_N8N_BASE_URL` and `WSP8_N8N_API_KEY` in development environment for local API/deploy tooling.
-- Use `WSP8_WP_SITE_URL`, `WSP8_APPROVAL_EMAIL`, and `WSP8_APPROVAL_NAME` in n8n runtime for workflow execution.
+- Use `WSPAF_N8N_BASE_URL` and `WSPAF_N8N_API_KEY` in development environment for local API/deploy tooling.
+- Use `WSPAF_WP_SITE_URL`, `WSPAF_APPROVAL_EMAIL`, and `WSPAF_APPROVAL_NAME` in n8n runtime for workflow execution.
 Never hardcode any of these values in source files.
 
 
@@ -157,7 +157,10 @@ When calling the API, exclude read-only fields from payload (for example `tags`,
 
 - Always check if a workflow with the same name already exists before creating a new one (to avoid duplicates)
 - Never hardcode sensitive values (API keys, passwords) inside workflow JSON — use n8n credentials instead
-- Respect variable scope split: local tooling uses `WSP8_N8N_BASE_URL`/`WSP8_N8N_API_KEY`; workflow runtime uses `WSP8_WP_SITE_URL`/`WSP8_APPROVAL_*`
+- Respect variable scope split: local tooling uses `WSPAF_N8N_BASE_URL`/`WSPAF_N8N_API_KEY`; workflow runtime uses `WSPAF_WP_SITE_URL`/`WSPAF_APPROVAL_*`
+- For WordPress new-post detection, use publication date (`date_gmt`) as primary criterion
+- For duplicate prevention, persist processed WordPress post IDs in n8n Data Store
+- Support dual start paths when required: `Schedule Trigger` for production checks and `Manual Trigger` for test runs
 - If a node requires a credential, reference the credential configured in n8n Credentials
 - When in doubt about a node's configuration, prefer a simpler, working structure over a complex broken one
 - After every deployment, verify the server returned a `200 OK` or `201 Created` response before committing

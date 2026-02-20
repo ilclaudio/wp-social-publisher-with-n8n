@@ -1,0 +1,61 @@
+# ------------------------------
+# Secrets and local env
+# ------------------------------
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# Optional local secrets files
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ------------------------------
+# n8n local runtime/state
+# ------------------------------
+.n8n/
+n8n.sqlite
+database.sqlite
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# ------------------------------
+# Node.js / scripts tooling
+# ------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.npm/
+.yarn/
+
+# Build/test artifacts
+dist/
+build/
+coverage/
+.nyc_output/
+
+# ------------------------------
+# Editor / OS noise
+# ------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ------------------------------
+# Generic local temp/cache
+# ------------------------------
+tmp/
+temp/
+.cache/

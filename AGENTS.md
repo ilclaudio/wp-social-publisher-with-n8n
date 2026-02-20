@@ -4,6 +4,9 @@ ChatGPT/Codex specific entry point.
 
 Read `AGENTS/AGENTS_README.md` for shared agent rules and file map.
 
+Mandatory security reminder: never insert secrets in workflow JSON files.
+Synchronization rule: if you add instructions here, mirror them in `CLAUDE.md`.
+
 
 ## Session bootstrap
 Run this section only once at session start, unless the user explicitly asks to reload AGENTS context.

@@ -7,6 +7,7 @@ Read this file automatically and follow these rules before running session boots
 - Run bootstrap only once at session start.
 - Do not re-run bootstrap on every interaction.
 - Re-run bootstrap only when the user explicitly asks to reload agent context.
+- Security rule (mandatory): never insert secrets in workflow JSON files (API keys, tokens, passwords, private keys, auth headers, cookies, personal data).
 
 ## Common File Map
 - `AGENTS.md`: Codex/ChatGPT entry point.

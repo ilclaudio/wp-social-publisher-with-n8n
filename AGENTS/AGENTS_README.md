@@ -11,6 +11,6 @@ Read this file automatically and follow these rules before running session boots
 ## Common File Map
 - `AGENTS.md`: Codex/ChatGPT entry point.
 - `CLAUDE.md`: Claude Code entry point.
-- `PROJECT.md`: project description, product scope, and workflows.
-- `GIT_WORKFLOW.md`: branch, commit, PR, and sensitive-data commit gate rules.
+- `AGENTS/PROJECT.md`: project description, product scope, and workflows.
+- `AGENTS/GIT_WORKFLOW.md`: branch, commit, PR, and sensitive-data commit gate rules.
 - `README.md`: human-readable quick project summary.

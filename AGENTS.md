@@ -7,6 +7,9 @@ Read `AGENTS/AGENTS_README.md` for shared agent rules and file map.
 Mandatory security reminder: never insert secrets in workflow JSON files.
 Synchronization rule: if you add instructions here, mirror them in `CLAUDE.md`.
 
+## Environment check preference
+When validating `WSP8_*` environment variables or testing n8n API connectivity, try PowerShell first (same context where variables are often set), then fall back to bash/WSL checks if needed.
+
 
 ## Session bootstrap
 Run this section only once at session start, unless the user explicitly asks to reload AGENTS context.

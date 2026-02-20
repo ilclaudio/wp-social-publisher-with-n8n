@@ -5,8 +5,9 @@ Use these rules only when the task includes branch/commit/PR work.
 
 ## Branches
 
-- Base branch: `main`.
-- Never commit directly to `main`.
+- Base branch: `main` (or `master`, if the repository uses `master`).
+- Standard rule: do not commit directly to base branch; use a feature branch.
+- Test-project exception: if you are already on `master` or `main`, direct commits are allowed.
 - Branch name format: `<prefix>/<camelCaseName>`.
 - Prefixes: `features/`, `bugfix/`, `refactor/`, `docs/`.
 - Examples:
@@ -49,6 +50,7 @@ Examples:
 
 ## Pull Requests
 
-- Open PR from feature branch to `main`.
+- Open PR from feature branch to `main` (or `master` in repos that use `master`).
+- Test-project exception: for quick test activities, direct commits on `master`/`main` can be used without PR.
 - Write clear title and summary.
 - Reference related issues from `ISSUES_TODO.md` when applicable.

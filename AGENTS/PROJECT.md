@@ -11,6 +11,11 @@ The agent is expected to create, modify, and deploy n8n workflows by:
 
 For any branch/commit/PR activity, use `AGENTS/GIT_WORKFLOW.md` as the single source of truth, including the mandatory sensitive-data checks before commit and the test-project exception that allows direct commits on `master`/`main` when already on those branches.
 
+## Technology Stack
+
+- DEV environment: Visual Studio Code (VSC) on Windows 11.
+- n8n platform: use n8n version `>= 2.8.3`.
+
 ---
 
 ## Environment

@@ -1,5 +1,5 @@
 {
-  "name": "Test Manual Trigger Base",
+  "name": "WP Social Publisher Approval Flow",
   "nodes": [
     {
       "parameters": {},
@@ -14,28 +14,20 @@
     },
     {
       "parameters": {
-        "keepOnlySet": true,
-        "values": {
-          "boolean": [
+        "assignments": {
+          "assignments": [
             {
-              "name": "test_ok",
-              "value": true
-            }
-          ],
-          "string": [
-            {
-              "name": "source",
-              "value": "manual-test"
-            },
-            {
-              "name": "timestamp",
-              "value": "={{$now}}"
+              "id": "status-field",
+              "name": "result",
+              "value": "OK",
+              "type": "string"
             }
           ]
-        }
+        },
+        "options": {}
       },
-      "id": "set-fields",
-      "name": "Set",
+      "id": "set-output",
+      "name": "Set Output",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
       "position": [
@@ -49,7 +41,7 @@
       "main": [
         [
           {
-            "node": "Set",
+            "node": "Set Output",
             "type": "main",
             "index": 0
           }

@@ -15,21 +15,21 @@ For any branch/commit/PR activity, use `AGENTS/GIT_WORKFLOW.md` as the single so
 
 ## Environment
 
-| Variable | Description |
-|---|---|
-| `N8N_BASE_URL` | Base URL of the n8n server (e.g. `http://192.168.1.100:5678`) |
-| `N8N_API_KEY` | API key for authenticating with the n8n REST API |
-| `N8N_GIT_REMOTE` | Remote repository URL (e.g. `https://github.com/user/n8n-workflows`) |
+| Variable | Scope | Description |
+|---|---|---|
+| `WSP8_N8N_BASE_URL` | Development environment | Base URL of the n8n server (e.g. `http://192.168.1.100:5678`) |
+| `WSP8_N8N_API_KEY` | Development environment | API key for authenticating with the n8n REST API |
+| `WSP8_WP_SITE_URL` | n8n runtime | WordPress site base URL used to detect new posts |
+| `WSP8_APPROVAL_EMAIL` | n8n runtime | Approval recipient email address for channel publish decisions |
+| `WSP8_APPROVAL_NAME` | n8n runtime | Approval recipient display name used in emails |
 
-These values must be read from Windows environment variables (User or System scope), not hardcoded in source files.
+Project naming rule: all environment variables must use the `WSP8_` prefix.
 
-PowerShell example:
+Runtime split rule:
+- Use `WSP8_N8N_BASE_URL` and `WSP8_N8N_API_KEY` in development environment for local API/deploy tooling.
+- Use `WSP8_WP_SITE_URL`, `WSP8_APPROVAL_EMAIL`, and `WSP8_APPROVAL_NAME` in n8n runtime for workflow execution.
+Never hardcode any of these values in source files.
 
-```powershell
-[Environment]::SetEnvironmentVariable("N8N_BASE_URL", "http://192.168.1.100:5678", "User")
-[Environment]::SetEnvironmentVariable("N8N_API_KEY", "your-api-key", "User")
-[Environment]::SetEnvironmentVariable("N8N_GIT_REMOTE", "https://github.com/user/n8n-workflows", "User")
-```
 
 > Never commit secrets, API keys, or `.env` files to Git.
 
@@ -55,19 +55,6 @@ n8n-workflows/
 │   │   └── sync-email-sheets.json
 │   └── draft/                  # Workflows in development, not yet deployed
 │       └── new-workflow.json
-│
-├── scripts/                    # Utility scripts for interacting with n8n API
-│   ├── deploy.js               # Deploy one or all workflows from local to n8n
-│   ├── pull.js                 # Pull all workflows from n8n and save locally
-│   ├── activate.js             # Activate a workflow by ID or name
-│   └── list.js                 # List all workflows currently on the server
-│
-├── credentials/                # (Optional) Reference list of available credentials
-│   └── credentials-map.md      # Maps credential names to their n8n IDs
-│
-└── docs/                       # Additional documentation
-    ├── workflow-conventions.md  # Naming conventions and design patterns
-    └── changelog.md            # Manual log of major changes
 ```
 
 ---
@@ -169,6 +156,7 @@ When deploying a new workflow via `POST /api/v1/workflows`, do **not** include t
 
 - Always check if a workflow with the same name already exists before creating a new one (to avoid duplicates)
 - Never hardcode sensitive values (API keys, passwords) inside workflow JSON — use n8n credentials instead
+- Respect variable scope split: local tooling uses `WSP8_N8N_BASE_URL`/`WSP8_N8N_API_KEY`; workflow runtime uses `WSP8_WP_SITE_URL`/`WSP8_APPROVAL_*`
 - If a node requires a credential, reference it by the credential name listed in the credentials map above
 - When in doubt about a node's configuration, prefer a simpler, working structure over a complex broken one
 - After every deployment, verify the server returned a `200 OK` or `201 Created` response before committing

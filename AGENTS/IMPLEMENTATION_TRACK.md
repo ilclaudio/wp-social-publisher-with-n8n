@@ -1,132 +1,148 @@
 # Implementation Track
 
-## 1) Obiettivo Progetto
-Descrivi in 5-10 righe cosa deve fare il progetto a regime.
+## 1) Project Objective
+Describe in 5-10 lines what the project must achieve when complete.
 
-- Problema che risolve:
-- Utenti destinatari:
-- Risultato finale atteso:
-- Metriche di successo (es. tempo risparmiato, errori ridotti, automazioni completate):
+- Problem solved:
+- Target users:
+- Expected final outcome:
+- Success metrics (e.g., time saved, reduced errors, completed automations):
 
-## 2) Contesto e Vincoli
-Elenca i vincoli tecnici e organizzativi da rispettare.
+## 2) Context and Constraints
+List the technical and organizational constraints that must be respected.
 
-- Stack/strumenti obbligatori:
-- Vincoli infrastrutturali (server, rete, on-prem, ecc.):
-- Vincoli di sicurezza/compliance:
-- Vincoli operativi (finestre di deploy, backup, rollback):
+- Required stack/tools:
+- Infrastructure constraints (server, network, on-prem, etc.):
+- Security/compliance constraints:
+- Operational constraints (deployment windows, backup, rollback):
 
-## 3) Funzionalita (Backlog Testuale)
-Inserisci le funzionalita in ordine logico, ognuna con questo formato.
+## 3) Features (Text Backlog)
+List features in logical order, each using this format.
 
-### Funzionalita 1 - <Nome>
-- Descrizione:
-- Valore per l'utente:
-- Input attesi:
-- Output attesi:
-- Dipendenze:
-- Priorita: MVP | v1 | v2
-- Stato: todo | in-progress | done
-- Criteri di accettazione:
+### Feature 1 - <Name>
+- Description:
+- User value:
+- Expected inputs:
+- Expected outputs:
+- Dependencies:
+- Priority: MVP | v1 | v2
+- Status: todo | in-progress | done
+- Acceptance criteria:
   1. 
   2. 
   3. 
-- Test manuale minimo:
-  1. 
-  2. 
-  3. 
-
-### Funzionalita 2 - <Nome>
-- Descrizione:
-- Valore per l'utente:
-- Input attesi:
-- Output attesi:
-- Dipendenze:
-- Priorita: MVP | v1 | v2
-- Stato: todo | in-progress | done
-- Criteri di accettazione:
-  1. 
-  2. 
-  3. 
-- Test manuale minimo:
+- Minimum manual test:
   1. 
   2. 
   3. 
 
-## 4) Priorita e Rilasci
-Raggruppa le funzionalita per milestone.
+### Feature 2 - <Name>
+- Description:
+- User value:
+- Expected inputs:
+- Expected outputs:
+- Dependencies:
+- Priority: MVP | v1 | v2
+- Status: todo | in-progress | done
+- Acceptance criteria:
+  1. 
+  2. 
+  3. 
+- Minimum manual test:
+  1. 
+  2. 
+  3. 
+
+## 4) Priorities and Releases
+Group features by milestone.
 
 ### MVP
-- [ ] Funzionalita <id>
-- [ ] Funzionalita <id>
+- [ ] Feature <id>
+- [ ] Feature <id>
 
 ### v1
-- [ ] Funzionalita <id>
-- [ ] Funzionalita <id>
+- [ ] Feature <id>
+- [ ] Feature <id>
 
 ### v2
-- [ ] Funzionalita <id>
-- [ ] Funzionalita <id>
+- [ ] Feature <id>
+- [ ] Feature <id>
 
-## 5) Piano Step-by-Step di Implementazione
-Spezza il lavoro in task piccoli, sequenziali e verificabili.
+## 5) Step-by-Step Implementation Plan
+Break work into small, sequential, and verifiable tasks.
 
-### Step 1 - <Titolo>
-- Obiettivo:
-- Attivita:
+Status legend:
+- `todo`: not started
+- `in-progress`: currently being worked on
+- `done`: completed and verified
+- `blocked`: waiting on dependency/decision
+
+Use both markers for each step:
+- Checkbox: `- [ ]` (to do) or `- [x]` (done)
+- Status field: `todo | in-progress | done | blocked`
+
+### Step 1 - <Title>
+- [ ] Step completion
+- Objective:
+- Activities:
   1. 
   2. 
   3. 
-- Definizione di completamento:
-- Output atteso:
-- Stato: todo | in-progress | done
+- Definition of done:
+- Expected output:
+- Status: todo | in-progress | done | blocked
+- Started on: YYYY-MM-DD
+- Completed on: YYYY-MM-DD
 
-### Step 2 - <Titolo>
-- Obiettivo:
-- Attivita:
+### Step 2 - <Title>
+- [ ] Step completion
+- Objective:
+- Activities:
   1. 
   2. 
   3. 
-- Definizione di completamento:
-- Output atteso:
-- Stato: todo | in-progress | done
+- Definition of done:
+- Expected output:
+- Status: todo | in-progress | done | blocked
+- Started on: YYYY-MM-DD
+- Completed on: YYYY-MM-DD
 
-## 6) Rischi e Dipendenze
+## 6) Risks and Dependencies
 
-### Rischi
-- Rischio:
-  - Impatto:
-  - Probabilita:
-  - Mitigazione:
+### Risks
+- Risk:
+  - Impact:
+  - Probability:
+  - Mitigation:
 
-### Dipendenze esterne
-- Dipendenza:
-  - Tipo (tecnica/organizzativa/fornitore):
-  - Blocco potenziale:
-  - Piano B:
+### External dependencies
+- Dependency:
+  - Type (technical/organizational/vendor):
+  - Potential blocker:
+  - Backup plan:
 
-## 7) Regole Operative per l'Implementazione
-Queste regole servono a usare questo file come traccia unica durante lo sviluppo.
+## 7) Operational Rules for Implementation
+Use these rules to keep this file as the single development track.
 
-- Ogni nuova richiesta di sviluppo deve riferirsi a una Funzionalita e a uno Step specifico.
-- Prima di iniziare una modifica, imposta lo stato dello Step su in-progress.
-- A fine implementazione e test, imposta lo stato su done.
-- Se emerge nuovo scope, aggiungilo qui prima di implementarlo.
-- Non inserire segreti nel repository o nei JSON dei workflow.
+- Every new development request must reference one Feature and one specific Step.
+- Before starting any change, set the Step status to in-progress.
+- After implementation and testing, set the Step status to done.
+- If new scope appears, add it here before implementing it.
+- Do not place secrets in the repository or in workflow JSON files.
 
-## 8) Log Decisioni
-Tieni traccia delle decisioni tecniche rilevanti.
+## 8) Decision Log
+Track relevant technical decisions.
 
-- Data:
-- Decisione:
-- Motivazione:
-- Alternative considerate:
-- Impatto:
+- Date:
+- Decision:
+- Rationale:
+- Alternatives considered:
+- Impact:
 
-## 9) Comandi Prompt Consigliati
-Usa questi prompt per lavorare in modo coerente con la traccia.
+## 9) Recommended Prompt Commands
+Use these prompts to work consistently with this track.
 
-1. "Implementa Funzionalita <id>, Step <id> in `AGENTS/IMPLEMENTATION_TRACK.md`."
-2. "Aggiorna stato e criteri di accettazione della Funzionalita <id> dopo le modifiche."
-3. "Esegui review dello Step <id> rispetto ai criteri di accettazione definiti."
-4. "Proponi il prossimo Step minimo per avanzare verso MVP."
+1. "Implement Feature <id>, Step <id> in `AGENTS/IMPLEMENTATION_TRACK.md`."
+2. "Update status and acceptance criteria of Feature <id> after the changes."
+3. "Review Step <id> against the defined acceptance criteria."
+4. "Propose the next minimum Step to progress toward MVP."

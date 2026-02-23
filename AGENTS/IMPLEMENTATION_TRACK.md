@@ -210,7 +210,7 @@ Use both markers for each step:
 - Status field: `todo | in-progress | done | blocked`
 
 ### Step 1 - Environment and Security Baseline
-- [ ] Step completion
+- [x] Step completion
 - Objective: define env vars and secure credentials management in n8n before building business logic.
 - Activities:
   1. Define and document env vars by scope:
@@ -220,13 +220,13 @@ Use both markers for each step:
   3. Verify no secrets are present in repository and workflow JSON files.
 - Progress:
   - [x] Activity 1 verified on 2026-02-20 (env vars documented by scope in project docs)
-  - [ ] Activity 2 pending (scheduled next session)
+  - [x] Activity 2 verified on 2026-02-23 (credentials creation strategy confirmed: create n8n credentials incrementally as each node/channel is implemented)
   - [x] Activity 3 verified on 2026-02-20 (repository/workflow JSON secret scan clean)
 - Definition of done: scoped env vars are documented/configured and credentials are available in n8n.
 - Expected output: security baseline checklist completed.
-- Status: in-progress
+- Status: done
 - Started on: 2026-02-20
-- Completed on: YYYY-MM-DD
+- Completed on: 2026-02-23
 
 ### Step 2 - MVP Skeleton (Detection + Extraction + AI + Approval + Twitter/X)
 - [ ] Step completion
@@ -235,10 +235,14 @@ Use both markers for each step:
   1. Implement Features 1-4 (dual trigger check, `date_gmt` detection, Data Store dedup, extraction, AI generation, email approval).
   2. Implement Feature 5 with approve/reject branching.
   3. Validate no-op, reject-skip, approve-publish scenarios.
+- Progress:
+  - [x] Task 1 completed on 2026-02-23 (created MVP draft workflow skeleton in `workflows/draft/wp-social-publisher-approval-flow-mvp.json`)
+  - [x] Task 2 completed on 2026-02-23 (configured dual trigger: `Manual Trigger` + `Schedule Trigger (Hourly)` every 1 hour)
+  - [x] Task 3 completed on 2026-02-23 (implemented `Detect New Posts (date_gmt)` with WordPress REST fetch + UTC `date_gmt` filter window in workflow JSON and deployed to n8n)
 - Definition of done: one approved WordPress post is published on Twitter/X.
 - Expected output: stable MVP workflow in n8n and JSON aligned to repository standards.
-- Status: todo | in-progress | done | blocked
-- Started on: YYYY-MM-DD
+- Status: in-progress
+- Started on: 2026-02-23
 - Completed on: YYYY-MM-DD
 
 ### Step 3 - Add Telegram Channel

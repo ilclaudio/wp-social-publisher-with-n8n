@@ -16,11 +16,15 @@ Configuration must use environment variables with the `WSPAF_` project prefix.
 - `Schedule Trigger (Hourly)`: starts the workflow automatically every hour.
 - `Start (Manual or Hourly)`: merges the two start paths into a single execution path.
 - `Fetch WP Posts`: reads recent published posts from the WordPress REST API using `$env.WSPAF_WP_SITE_URL`.
+- `Fetch WP Posts`: reads recent published posts from the WordPress REST API using `$env.WSPAF_WP_SITE_URL`, requesting both `_links` and `_embedded` so featured media can be extracted reliably.
 - `Debug - Count fetched posts`: logs how many posts were fetched and prints a short preview of the first items.
 - `Detect New Posts (date_gmt)`: keeps only posts whose `date_gmt` falls within the recent detection window and adds `detectedAtUtc`.
 - `Initial Block Notes`: sticky note that documents the purpose of the opening block and the required runtime variables.
-- `Deduplicate via Data Store`: uses the `Remove Duplicates` node to skip posts whose WordPress `id` was already processed in previous executions.
+- `Deduplicate via Data Store`: uses the `Remove Duplicates` node to skip posts whose WordPress `id` was already processed in previous executions. It uses workflow scope so its history can also be cleared by the maintenance branch.
 - `Debug - Deduplicate summary`: logs how many recent posts were detected, how many remain after deduplication, and which post IDs were skipped as duplicates.
+- `Manual Trigger (Clear Dedupe History)`: starts a maintenance-only branch to reset the stored deduplication history during debugging.
+- `Clear Dedupe History`: clears the workflow-scope deduplication history used by the `Remove Duplicates` node.
+- `Debug - Clear dedupe history`: logs a confirmation payload after the deduplication history reset runs.
 - `Extract URL and Featured Image`: normalizes title, excerpt, post URL, and featured image data from the WordPress response.
 
 ### Placeholder nodes not implemented yet

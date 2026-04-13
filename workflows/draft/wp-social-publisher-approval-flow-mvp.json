@@ -129,14 +129,34 @@
       ]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "dedupeValue": "={{ $json.id }}",
+        "options": {
+          "scope": "node",
+          "historySize": 10000
+        }
+      },
       "id": "deduplicate-posts",
       "name": "Deduplicate via Data Store",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
       "position": [
         1280,
         220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const detectedItems = $('Detect New Posts (date_gmt)').all();\nconst detectedIds = detectedItems\n  .map((item) => item.json?.id)\n  .filter((value) => value !== undefined && value !== null);\nconst keptIds = items\n  .map((item) => item.json?.id)\n  .filter((value) => value !== undefined && value !== null);\nconst keptSet = new Set(keptIds);\nconst duplicateIds = detectedIds.filter((id) => !keptSet.has(id));\n\nconsole.log(\n  `[DEBUG] Deduplicate summary: detected=${detectedIds.length}, kept=${keptIds.length}, duplicates=${duplicateIds.length}`,\n);\n\nif (keptIds.length > 0) {\n  console.log(`[DEBUG] New post IDs after dedupe: ${keptIds.join(', ')}`);\n}\n\nif (duplicateIds.length > 0) {\n  console.log(`[DEBUG] Duplicate post IDs skipped: ${duplicateIds.join(', ')}`);\n}\n\nreturn items;"
+      },
+      "id": "debug-deduplicate-summary",
+      "name": "Debug - Deduplicate summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        60
       ]
     },
     {
@@ -254,6 +274,17 @@
       ]
     },
     "Deduplicate via Data Store": {
+      "main": [
+        [
+          {
+            "node": "Debug - Deduplicate summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug - Deduplicate summary": {
       "main": [
         [
           {

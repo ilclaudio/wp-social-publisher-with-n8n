@@ -66,8 +66,12 @@
               "value": "publish"
             },
             {
+              "name": "_embed",
+              "value": "wp:featuredmedia"
+            },
+            {
               "name": "_fields",
-              "value": "id,date,date_gmt,link,slug,title,excerpt,featured_media"
+              "value": "id,date,date_gmt,link,slug,title,excerpt,featured_media,_embedded"
             }
           ]
         },
@@ -84,7 +88,20 @@
     },
     {
       "parameters": {
-        "jsCode": "// Filter by WordPress publication date in UTC (date_gmt).\n// Current detection window: last 70 minutes.\nconst LOOKBACK_MINUTES = 70;\nconst now = new Date();\nconst cutoffMs = now.getTime() - LOOKBACK_MINUTES * 60 * 1000;\n\nreturn items\n  .filter((item) => {\n    const dateGmt = item.json.date_gmt;\n    if (!dateGmt) return false;\n    const publishedMs = Date.parse(`${dateGmt}Z`);\n    return Number.isFinite(publishedMs) && publishedMs > cutoffMs;\n  })\n  .map((item) => ({\n    json: {\n      ...item.json,\n      detectedAtUtc: now.toISOString(),\n    },\n  }));"
+        "jsCode": "const postCount = items.length;\nconsole.log(`[DEBUG] Fetch WP Posts returned ${postCount} posts`);\n\nitems.slice(0, 5).forEach((item, index) => {\n  const post = item.json ?? {};\n  console.log(\n    `[DEBUG] Post ${index + 1}: id=${post.id} slug=${post.slug} date_gmt=${post.date_gmt}`,\n  );\n});\n\nreturn items;"
+      },
+      "id": "debug-count-fetched-posts",
+      "name": "Debug - Count fetched posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const LOOKBACK_MINUTES = 70;\nconst now = new Date();\nconst cutoffMs = now.getTime() - LOOKBACK_MINUTES * 60 * 1000;\n\nreturn items\n  .filter((item) => {\n    const post = item.json ?? {};\n    const dateGmt = post.date_gmt;\n\n    if (!dateGmt) {\n      return false;\n    }\n\n    const publishedMs = Date.parse(`${dateGmt}Z`);\n    return Number.isFinite(publishedMs) && publishedMs > cutoffMs;\n  })\n  .map((item) => ({\n    json: {\n      ...(item.json ?? {}),\n      detectedAtUtc: now.toISOString(),\n    },\n  }));"
       },
       "id": "detect-new-posts",
       "name": "Detect New Posts (date_gmt)",
@@ -93,6 +110,22 @@
       "position": [
         1020,
         220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Initial block\nThis workflow starts from `Manual Trigger` or `Schedule Trigger (Hourly)` and converges into `Start (Manual or Hourly)`.\n\n`Fetch WP Posts` reads the WordPress base URL from `$env.WSPAF_WP_SITE_URL` and queries the latest published posts.\n\nRuntime environment values must be defined on the remote n8n server/container:\n- `WSPAF_WP_SITE_URL`\n- `WSPAF_APPROVAL_EMAIL`\n- `WSPAF_APPROVAL_NAME`\n\nSecrets and third-party authentication must stay in n8n Credentials.",
+        "height": 320,
+        "width": 520,
+        "color": 7
+      },
+      "id": "note-initial-block",
+      "name": "Initial Block Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -120
       ]
     },
     {
@@ -107,11 +140,13 @@
       ]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "jsCode": "const TAG_RE = /<[^>]*>/g;\nconst WHITESPACE_RE = /\\s+/g;\nconst ENTITY_MAP = {\n  '&amp;': '&',\n  '&lt;': '<',\n  '&gt;': '>',\n  '&quot;': '\"',\n  '&#039;': \"'\",\n  '&nbsp;': ' ',\n};\n\nfunction decodeEntities(value) {\n  return value.replace(/&(amp|lt|gt|quot|#039|nbsp);/g, (entity) => ENTITY_MAP[entity] ?? entity);\n}\n\nfunction stripHtml(value) {\n  if (typeof value !== 'string' || !value) {\n    return '';\n  }\n\n  const text = decodeEntities(value.replace(TAG_RE, ' '));\n  return text.replace(WHITESPACE_RE, ' ').trim();\n}\n\nreturn items.map((item) => {\n  const post = item.json ?? {};\n  const embedded = post._embedded ?? {};\n  const mediaItems = Array.isArray(embedded['wp:featuredmedia']) ? embedded['wp:featuredmedia'] : [];\n  const featuredMedia = mediaItems[0] ?? {};\n  const titleRaw = post.title;\n  const excerptRaw = post.excerpt;\n  const title = stripHtml(typeof titleRaw === 'object' ? titleRaw?.rendered : titleRaw);\n  const excerpt = stripHtml(typeof excerptRaw === 'object' ? excerptRaw?.rendered : excerptRaw);\n  const imageUrl = typeof featuredMedia === 'object' ? featuredMedia.source_url ?? null : null;\n\n  return {\n    json: {\n      ...post,\n      titleText: title,\n      excerptText: excerpt,\n      topic: title,\n      content: excerpt,\n      postUrl: post.link,\n      imageUrl,\n      hasFeaturedImage: Boolean(imageUrl),\n    },\n  };\n});"
+      },
       "id": "extract-post-payload",
       "name": "Extract URL and Featured Image",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         1540,
         220
@@ -186,6 +221,17 @@
       ]
     },
     "Fetch WP Posts": {
+      "main": [
+        [
+          {
+            "node": "Debug - Count fetched posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug - Count fetched posts": {
       "main": [
         [
           {

@@ -11,6 +11,20 @@ Synchronization rule: if you add instructions here, mirror them in `CLAUDE.md`.
 ## Environment check preference
 When validating `WSPAF_*` environment variables or testing n8n API connectivity, try PowerShell first (same context where variables are often set), then fall back to bash/WSL checks if needed.
 
+## n8n server runtime note
+The production/deployment n8n instance runs on a remote server with Ubuntu `22.04.05`.
+When reasoning about workflow runtime configuration, distinguish between:
+1. local development/tooling variables used from the workstation;
+2. environment or Variables configured on the remote Ubuntu n8n server.
+
+## Runtime parameter strategy
+For this project, use environment variables on the remote n8n server for workflow runtime values and read them inside workflows with `$env.<NAME>`.
+Prefer n8n `Credentials` for secrets and authenticated integrations.
+Current runtime variables for workflows are `WSPAF_WP_SITE_URL`, `WSPAF_APPROVAL_EMAIL`, and `WSPAF_APPROVAL_NAME`.
+
+## Workflow code language rule
+All code written inside n8n workflow nodes (for example `Code`, `Function`, or inline script blocks) must be written in JavaScript compatible with the n8n Code node runtime (server-side Node.js), not Python, unless the target n8n server is explicitly prepared with a working Python runner.
+
 ## Active workflow replacement rule
 When replacing an existing file in `workflows/active/` with a draft workflow:
 1. Create a dated backup of the current active file first (for example `*.backup-YYYY-MM-DD.json`).

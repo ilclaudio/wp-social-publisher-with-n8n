@@ -241,6 +241,8 @@ Use both markers for each step:
   - [x] Task 3 completed on 2026-02-23 (implemented `Detect New Posts (date_gmt)` with WordPress REST fetch + UTC `date_gmt` filter window in workflow JSON and deployed to n8n)
   - [x] Task 4 completed on 2026-04-13 (aligned workflow runtime configuration to environment variables and prepared server-side `WSPAF_*` usage)
   - [x] Task 5 completed on 2026-04-13 (implemented `Extract URL and Featured Image` using WordPress `_embedded` featured media data and normalized payload fields)
+  - [x] Task 6 completed on 2026-04-15 (implemented `Generate AI Message (max 280, #n8n)` using OpenAI node with `gpt-4o-mini` and `OpenAI account` credential; added `Validate AI Message` Code node to enforce 280-char limit and `#n8n` presence; credential `id` left empty in source JSON — resolved at deploy time via `GET /api/v1/credentials`)
+  - [x] Task 7 completed on 2026-04-15 (added `Debug - AI message` Code node after `Validate AI Message`; logs `socialMessage` text, length, and validity per item; output visible in node Logs tab in n8n execution detail view)
 - Definition of done: one approved WordPress post is published on Twitter/X.
 - Expected output: stable MVP workflow in n8n and JSON aligned to repository standards.
 - Status: in-progress

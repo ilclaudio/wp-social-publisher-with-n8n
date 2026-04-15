@@ -63,3 +63,4 @@ temp/
 
 # AI ignores
 .codex
+.claude

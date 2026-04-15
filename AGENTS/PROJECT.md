@@ -37,6 +37,8 @@ Runtime split rule:
 - Use n8n `Credentials` for secrets and authenticated integrations.
 Never hardcode any of these values in source files.
 
+Credential ID portability rule: n8n credential IDs are instance-specific. In workflow JSON source files, always leave the credential `id` field as an empty string `""` and populate only the `name` field. Before deploying via API, resolve the actual ID with `GET /api/v1/credentials` and inject it into the request payload at deploy time — never commit a resolved ID to the repository.
+
 
 > Never commit secrets, API keys, or `.env` files to Git.
 

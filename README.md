@@ -26,10 +26,16 @@ Configuration must use environment variables with the `WSPAF_` project prefix.
 - `Clear Dedupe History`: clears the workflow-scope deduplication history used by the `Remove Duplicates` node.
 - `Debug - Clear dedupe history`: logs a confirmation payload after the deduplication history reset runs.
 - `Extract URL and Featured Image`: normalizes title, excerpt, post URL, and featured image data from the WordPress response.
+- `Generate AI Message (max 280, #n8n)`: calls OpenAI (`gpt-4o-mini`) via `@n8n/n8n-nodes-langchain.openAi` (typeVersion 1.8, resource `text`, operation `message`) using the `OpenAI account` credential. Input fields: `titleText`, `excerptText`, `postUrl`. The prompt enforces language match, max 280 chars, `#n8n` hashtag, URL at the end. `simplify: true` — output field is `message` (string).
+- `Validate AI Message`: post-processes the OpenAI response to guarantee constraints. Extracts text from the `message` field, injects `#n8n` if missing, truncates to 280 chars preserving URL and hashtag. Adds `socialMessage`, `socialMessageLength`, and `socialMessageValid` fields to the payload.
+- `Debug - AI message`: logs the final `socialMessage` text, its length, and validity flag for each processed post. Output visible in the node's **Logs** tab inside the n8n execution detail view.
+
+### Credential deploy note
+
+The `Generate AI Message` node references the `OpenAI account` credential by name with an empty `id` field in the local JSON. Before deploying to the n8n server via API, resolve the actual credential ID with `GET /api/v1/credentials` and inject it into the request payload at deploy time. Do not hardcode the ID in the source file — it is instance-specific and not portable across n8n installations.
 
 ### Placeholder nodes not implemented yet
 
-- `Generate AI Message (max 280, #n8n)`: not implemented yet; it should generate the final social copy.
 - `Approval Gate (Email)`: not implemented yet; it should handle the approval request and decision flow.
 - `Publish to Twitter/X`: not implemented yet; it should publish only approved content to Twitter/X.
 

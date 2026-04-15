@@ -214,13 +214,70 @@
       ]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4o mini"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a social media copywriter.\n\nWrite a single post to announce a new blog article.\n\nStrict rules:\n- Maximum 280 characters total (URL and hashtag included)\n- Must include hashtag #n8n exactly once\n- End with the post URL\n- Write in the same language as the post title\n- Output ONLY the final message text, no explanations, no quotes, no line breaks"
+            },
+            {
+              "role": "user",
+              "content": "={{ 'Title: ' + $json.titleText + '\\nExcerpt: ' + $json.excerptText + '\\nURL: ' + $json.postUrl }}"
+            }
+          ]
+        },
+        "simplify": true,
+        "options": {
+          "temperature": 0.7
+        }
+      },
       "id": "generate-ai-message",
       "name": "Generate AI Message (max 280, #n8n)",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
       "position": [
         1800,
+        220
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function enforceConstraints(raw) {\n  const URL_RE = /https?:\\/\\/\\S+/g;\n  let message = raw.trim();\n\n  const urls = message.match(URL_RE) || [];\n  const postUrl = urls[urls.length - 1] || '';\n\n  if (!message.includes('#n8n')) {\n    if (postUrl && message.endsWith(postUrl)) {\n      const body = message.slice(0, message.lastIndexOf(postUrl)).trimEnd();\n      message = body + ' #n8n ' + postUrl;\n    } else {\n      message = message.trimEnd() + ' #n8n';\n      if (postUrl) {\n        message += ' ' + postUrl;\n      }\n    }\n  }\n\n  if (message.length > 280) {\n    let body = message;\n    if (postUrl) {\n      body = body.replace(' ' + postUrl, '').replace(postUrl, '');\n    }\n    body = body.replace(/ #n8n/g, '').replace(/#n8n /g, '').replace(/#n8n/g, '').trim();\n    const tail = postUrl ? ' #n8n ' + postUrl : ' #n8n';\n    const maxBody = 280 - tail.length;\n    message = body.slice(0, maxBody).trimEnd() + tail;\n  }\n\n  return message;\n}\n\nreturn items.map((item) => {\n  const post = item.json ?? {};\n\n  let raw = '';\n  if (typeof post.message === 'string') {\n    raw = post.message;\n  } else if (typeof post.message?.content === 'string') {\n    raw = post.message.content;\n  } else if (post.choices?.[0]?.message?.content) {\n    raw = post.choices[0].message.content;\n  }\n\n  const socialMessage = enforceConstraints(raw);\n  const socialMessageValid = socialMessage.length <= 280 && socialMessage.includes('#n8n');\n\n  console.log(`[DEBUG] Validate AI message: length=${socialMessage.length}, valid=${socialMessageValid}`);\n  if (!socialMessageValid) {\n    console.warn(`[WARN] AI message constraint violation: \"${socialMessage}\"`);\n  }\n\n  return {\n    json: {\n      ...post,\n      socialMessage,\n      socialMessageLength: socialMessage.length,\n      socialMessageValid,\n    },\n  };\n});"
+      },
+      "id": "validate-ai-message",
+      "name": "Validate AI Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2060,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "items.forEach((item, index) => {\n  const post = item.json ?? {};\n  console.log(\n    `[DEBUG] AI message [${index + 1}/${items.length}] post_id=${post.id} valid=${post.socialMessageValid} length=${post.socialMessageLength}`,\n  );\n  console.log(`[DEBUG] socialMessage: ${post.socialMessage}`);\n});\n\nreturn items;"
+      },
+      "id": "debug-ai-message",
+      "name": "Debug - AI message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2320,
         220
       ]
     },
@@ -231,7 +288,7 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        2060,
+        2580,
         220
       ]
     },
@@ -242,7 +299,7 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        2320,
+        2840,
         220
       ]
     }
@@ -370,6 +427,28 @@
       ]
     },
     "Generate AI Message (max 280, #n8n)": {
+      "main": [
+        [
+          {
+            "node": "Validate AI Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate AI Message": {
+      "main": [
+        [
+          {
+            "node": "Debug - AI message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug - AI message": {
       "main": [
         [
           {

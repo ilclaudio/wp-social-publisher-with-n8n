@@ -40,6 +40,18 @@ Expected behavior:
 - At the end, report the workflow ID, whether it was updated in place, and the verification result.
 
 
+## n8n Node Type Resolution
+
+Before implementing any node not yet present in the active workflow, always resolve the correct node type name for this specific server:
+
+1. **Scan existing workflows first**: `GET /api/v1/workflows` + `GET /api/v1/workflows/{id}` for each — collect all `node.type` values already in use. This is the only reliable programmatic source available on this server.
+2. **If the needed node is not found in existing workflows**: consult the official n8n documentation to identify the correct package (`n8n-nodes-base.*` vs `@n8n/n8n-nodes-langchain.*` vs community packages) and ask the user to confirm the node exists in their n8n UI before writing JSON.
+3. **Never assume `n8n-nodes-base.*`**: this server uses `@n8n/n8n-nodes-langchain.*` for AI/LLM nodes. The endpoints `/api/v1/node-types` and `/rest/node-types` are not available on this server.
+4. **Also collect `typeVersion`** from existing workflow nodes — use the version already in use on the server, not a version assumed from documentation.
+
+Apply this rule before every new node implementation, not only for AI/LLM nodes.
+
+
 ## Coding Standards
 
 - All code written inside n8n workflow nodes (Code node, Function node, or any inline script block) must be written in **JavaScript** compatible with the n8n Code node runtime (server-side Node.js), not Python, unless the target n8n server is explicitly prepared with a working Python runner.

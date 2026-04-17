@@ -6,7 +6,15 @@
 # IMPORTANT:
 # - do not commit the real token
 # - keep this file as a template only
+# - trust the exact project path used by Codex in the current environment
+#   (WSL uses /mnt/c/... paths, native Windows may use C:\... paths)
 
 [mcp_servers.n8n_mcp]
 url = "https://n8n.myserver.org/mcp-server/http"
 http_headers = { "authorization" = "Bearer <token-jwt>" }
+
+[projects."/mnt/c/path/to/your/project"]
+trust_level = "trusted"
+
+#[projects."C:\\path\\to\\your\\project"]
+#trust_level = "trusted"

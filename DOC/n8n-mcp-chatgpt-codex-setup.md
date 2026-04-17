@@ -74,12 +74,22 @@ Un template pronto è disponibile in [DOC/config.example.toml](./config.example.
 
 ### 4. Verificare che il progetto sia trusted
 
-Il file `~/.codex/config.toml` deve contenere questo progetto come trusted, altrimenti Codex non legge la configurazione MCP:
+Il file `~/.codex/config.toml` deve contenere questo progetto come trusted, altrimenti Codex non legge la configurazione MCP.
+
+Punto importante: il path deve combaciare con l'ambiente in cui gira Codex.
+
+- Se Codex gira in **WSL/Linux**, usa il path `/mnt/c/...`.
+- Se Codex gira in **Windows nativo**, usa il path `C:\...`.
+- Se apri lo stesso repo da percorsi diversi, puoi marcare come trusted piu di un path.
+
+Nel contesto di questo progetto, quando Codex gira in WSL, una configurazione funzionante e per esempio:
 
 ```toml
-[projects.'C:\SPAZIODATI\GoogleDriveLavoro\Progetti\PR-Automazioni con n8n\wp-social-publisher-with-n8n']
+[projects."/mnt/c/spaziodati/googledrivelavoro/progetti/pr-automazioni con n8n/wp-social-publisher-with-n8n"]
 trust_level = "trusted"
 ```
+
+Se vuoi evitare errori, usa esattamente il valore di `cwd` o l'output di `pwd` della sessione Codex corrente.
 
 ### 5. Riavviare Codex e verificare la connessione
 
@@ -128,6 +138,7 @@ Le due credenziali non interferiscono tra loro.
 - **Non committare mai `~/.codex/config.toml`** con il token JWT — è un file utente locale.
 - **Non committare mai `.env`** — contiene `WSPAF_N8N_API_KEY`.
 - **Non committare mai token reali nei file template in `DOC/`** — usa solo placeholder.
+- **Non copiare nei documenti di progetto il contenuto reale di `http_headers.authorization`** dal tuo `config.toml`.
 - Se il token MCP viene compromesso, rigeneralo dalla pagina *Settings → MCP* di n8n e aggiorna `config.toml` localmente.
 
 ---

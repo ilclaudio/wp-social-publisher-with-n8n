@@ -64,3 +64,4 @@ temp/
 # AI ignores
 .codex
 .claude
+.mcp.json

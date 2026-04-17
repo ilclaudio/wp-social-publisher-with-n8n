@@ -1,0 +1,16 @@
+# Codex MCP configuration example for n8n
+#
+# Copy this into the user-level Codex config file supported by your install
+# and replace the placeholder token with the real JWT from n8n.
+#
+# IMPORTANT:
+# - do not commit the real token
+# - keep this file as a template only
+
+[mcp_servers.n8n-mcp]
+type = "http"
+url = "https://n8n.claudiobattaglino.it/mcp-server/http"
+
+[mcp_servers.n8n-mcp.headers]
+Authorization = "Bearer <token-jwt>"
+

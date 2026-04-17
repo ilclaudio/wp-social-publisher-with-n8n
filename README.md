@@ -8,6 +8,20 @@ Configuration must use environment variables with the `WSPAF_` project prefix.
 - n8n Credentials: OpenAI, SMTP, and social platform secrets/tokens.
 - Workflow code should target the n8n Code node JavaScript runtime (server-side Node.js) unless the server is explicitly configured with a working Python runner.
 
+## MCP Server integration
+
+This project uses the n8n Instance-level MCP server, configured in `.mcp.json` (not committed — contains a JWT token). Claude Code connects automatically to the MCP endpoint at session start.
+
+**Why:** the n8n REST API does not expose a reliable `/node-types` endpoint on this server instance. The MCP server fills that gap and also streamlines the full development loop:
+
+- `search_nodes` / `get_node_types` — resolve exact node IDs and parameter names before writing workflow code, eliminating guesswork.
+- `validate_workflow` — validate SDK code before deploying, catching errors locally.
+- `update_workflow` — deploy changes to the server directly from the chat, without running PowerShell scripts.
+- `get_workflow_details` — read the live workflow state from the server, always in sync.
+- `execute_workflow` / `get_execution` — run and inspect executions for testing without opening the n8n UI.
+
+See [DOC/n8n-mcp-vscode-setup.md](DOC/n8n-mcp-vscode-setup.md) for the full setup procedure.
+
 ## Current workflow nodes
 
 ### Main flow

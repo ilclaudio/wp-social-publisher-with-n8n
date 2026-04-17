@@ -118,20 +118,22 @@ When calling the API, exclude read-only fields from payload (for example `tags`,
 ### When creating a new workflow
 
 1. Understand the automation goal described by the user
-2. Generate the workflow JSON respecting the n8n node structure
-3. Save the file in `workflows/draft/<workflow-name>.json`
-4. Deploy it to the n8n server via `POST /api/v1/workflows`
-5. If deployment is successful, move the file to `workflows/active/`
-6. Optionally activate it via `POST /api/v1/workflows/{id}/activate`
-7. Commit the new file with a descriptive message and push to remote
+2. Use `search_nodes` and `get_node_types` via MCP to resolve exact node IDs and parameter names
+3. Generate the workflow JSON respecting the n8n node structure
+4. Save the file in `workflows/draft/<workflow-name>.json`
+5. Deploy it to the n8n server via `POST /api/v1/workflows`
+6. If deployment is successful, move the file to `workflows/active/`
+7. Optionally activate it via `POST /api/v1/workflows/{id}/activate`
+8. Commit the new file with a descriptive message and push to remote
 
 ### When modifying an existing workflow
 
 1. Read the existing JSON from `workflows/active/<workflow-name>.json`
-2. Apply the requested changes
-3. Update the workflow on the server via `PUT /api/v1/workflows/{id}`
-4. Save the updated JSON locally (overwrite the existing file)
-5. Commit with a message describing what changed and push to remote
+2. For any new node, resolve type and parameters via MCP (`search_nodes` + `get_node_types`) before writing
+3. Apply the requested changes
+4. Update the workflow on the server via `scripts/deploy.ps1` (handles credential ID injection)
+5. Save the updated JSON locally (overwrite the existing file)
+6. Commit with a message describing what changed and push to remote
 
 ### When pulling workflows from the server
 

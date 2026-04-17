@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "n8n-mcp": {
+      "type": "http",
+      "url": "https://n8n.mysite.or/mcp-server/http",
+      "headers": {
+        "Authorization": "Bearer <token-jwt>"
+      }
+    }
+  }
+}

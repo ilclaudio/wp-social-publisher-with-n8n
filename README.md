@@ -30,14 +30,13 @@ See [DOC/n8n-mcp-vscode-setup.md](DOC/n8n-mcp-vscode-setup.md) for the full setu
 |---|---|---|
 | `Manual Trigger` | Trigger | Starts the workflow on demand for tests. |
 | `Schedule Trigger (Hourly)` | Trigger | Starts the workflow automatically every hour. |
-| `Start (Manual or Hourly)` | NoOp | Merges the two trigger paths into one execution path. |
-| `Fetch WP Posts` | HTTP Request | Calls the WordPress REST API (`$env.WSPAF_WP_SITE_URL`) and fetches the 20 most recent published posts, including `_embedded` data for featured media. |
+| `Fetch WP Posts` | HTTP Request | Calls the WordPress REST API (`$env.WSPAF_WP_SITE_URL`) and fetches the 20 most recent published posts, including `_embedded` data for featured media. Both triggers connect directly to this node. |
 | `Debug - Count fetched posts` | Code | Logs the number of posts returned and a short preview of the first items. |
 | `Detect New Posts (date_gmt)` | Code | Keeps only posts published within the last 70 minutes (based on `date_gmt`). Adds `detectedAtUtc` to each item. |
 | `Deduplicate via Data Store` | Remove Duplicates | Skips posts whose WordPress `id` was already seen in a previous execution (workflow-scope persistent history, up to 10 000 entries). |
 | `Debug - Deduplicate summary` | Code | Logs how many posts were detected, kept, and skipped as duplicates. |
-| `Extract URL and Featured Image` | Code | Normalises each post into clean fields: `titleText`, `excerptText`, `postUrl`, `imageUrl`, `hasFeaturedImage`. Strips HTML tags and decodes entities from title and excerpt. |
-| `Generate AI Message (max 280, #n8n)` | `@n8n/n8n-nodes-langchain.openAi` | Calls OpenAI `gpt-4o-mini` (credential `OpenAI account`) with a system prompt that enforces max 280 chars, `#n8n` hashtag, URL at the end, and language matching the post title. Input: `titleText`, `excerptText`, `postUrl`. |
+| `Extract URL and Featured Image` | Code | Normalises each post into clean fields: `titleText`, `excerptText`, `postUrl`, `imageUrl`, `hasFeaturedImage`. Strips HTML tags and decodes entities from title and excerpt. `imageUrl` is a URL string only — no binary is downloaded here. Twitter/X and Instagram will need a separate HTTP Request node to fetch the binary before uploading; Telegram and Facebook can use the URL directly. |
+| `Generate AI Message (max 280, #n8n)` | `@n8n/n8n-nodes-langchain.openAi` v2.1 | Calls OpenAI `gpt-4o-mini` via Responses API (credential `OpenAI account`). System instructions enforce max 280 chars, `#n8n` hashtag, URL at the end, and language matching the post title. Input: `titleText`, `excerptText`, `postUrl`. |
 | `Validate AI Message` | Code | Guarantees the AI output respects the constraints regardless of what OpenAI returned. Injects `#n8n` if missing, truncates to 280 chars preserving URL and hashtag. Adds `socialMessage`, `socialMessageLength`, `socialMessageValid` to the payload. |
 | `Debug - AI message` | Code | Logs the final `socialMessage` text, length, and validity for each post. Visible in the node's **Logs** tab in the n8n execution detail view. |
 | `Approval Gate (Email)` | — | **Placeholder** — not implemented. Will send an approval request email per channel. |

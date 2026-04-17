@@ -30,8 +30,9 @@ Trigger phrases:
 
 Expected behavior:
 - Treat the trigger phrase itself as explicit user confirmation for remote deploy.
+- Before deploying, run `validate_workflow` via MCP to catch errors in the workflow code early.
 - Use PowerShell first, not bash/WSL, to read `WSPAF_N8N_BASE_URL` and `WSPAF_N8N_API_KEY`.
-- Deploy by updating the existing remote workflow via n8n API `PUT`, not by deleting and recreating it, unless the user explicitly asks otherwise.
+- Deploy by running `scripts/deploy.ps1` (or equivalent PUT via REST API), not via MCP `update_workflow` — the script handles credential ID injection that MCP does not perform automatically.
 - Default source file: `workflows/active/wp-social-publisher-approval-flow.json`, unless the user specifies a different workflow file.
 - First identify the remote workflow by canonical name, then update that workflow in place.
 - Exclude read-only fields from the request body.
@@ -42,12 +43,23 @@ Expected behavior:
 
 ## n8n Node Type Resolution
 
-Before implementing any node not yet present in the active workflow, always resolve the correct node type name for this specific server:
+Before implementing any node not yet present in the active workflow, always resolve the correct node type name and parameters for this specific server.
 
-1. **Scan existing workflows first**: `GET /api/v1/workflows` + `GET /api/v1/workflows/{id}` for each — collect all `node.type` values already in use. This is the only reliable programmatic source available on this server.
-2. **If the needed node is not found in existing workflows**: consult the official n8n documentation to identify the correct package (`n8n-nodes-base.*` vs `@n8n/n8n-nodes-langchain.*` vs community packages) and ask the user to confirm the node exists in their n8n UI before writing JSON.
-3. **Never assume `n8n-nodes-base.*`**: this server uses `@n8n/n8n-nodes-langchain.*` for AI/LLM nodes. The endpoints `/api/v1/node-types` and `/rest/node-types` are not available on this server.
-4. **Also collect `typeVersion`** from existing workflow nodes — use the version already in use on the server, not a version assumed from documentation.
+**Primary method — MCP server (preferred):**
+
+1. Call `search_nodes` with the service or node name (e.g. `"openai"`, `"wordpress"`, `"schedule trigger"`).
+2. Note the node ID and discriminators (`resource`, `operation`, `mode`) returned.
+3. Call `get_node_types` with the node ID and discriminators to get the exact TypeScript parameter definitions.
+4. Use only the parameter names returned — never guess or assume field names.
+
+The MCP server is connected via `.mcp.json` and available in every Claude Code session. The endpoints `/api/v1/node-types` and `/rest/node-types` are not available on this server — MCP is the only reliable programmatic source for node type definitions.
+
+**Fallback — scan existing workflows (when MCP is unavailable):**
+
+1. `GET /api/v1/workflows` + `GET /api/v1/workflows/{id}` for each — collect all `node.type` and `typeVersion` values already in use.
+2. If the node is not found, consult official n8n documentation and ask the user to confirm the node exists in their n8n UI before writing JSON.
+
+**Always collect `typeVersion`** — use the version already in use on the server, not a version assumed from documentation.
 
 Apply this rule before every new node implementation, not only for AI/LLM nodes.
 

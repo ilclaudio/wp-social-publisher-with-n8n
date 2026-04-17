@@ -10,10 +10,9 @@ Questo documento elenca i passaggi da fare e quelli che faremo in questo progett
 
 ## Stato attuale del progetto
 
-- Il server MCP è già definito in [`.mcp.json`](../.mcp.json).
-- Claude Code lo legge già correttamente.
-- Codex, invece, usa la sua configurazione locale e non eredita automaticamente quella di Claude.
-- Il token JWT presente in [`.mcp.json`](../.mcp.json) **non va committato**.
+- Il server MCP di n8n è abilitato e raggiungibile.
+- Per Codex, la config operativa va nel file utente [`~/.codex/config.toml`](https://developers.openai.com/learn/docs-mcp).
+- Il token JWT MCP **non va committato** nel repository.
 
 ---
 
@@ -54,11 +53,17 @@ Questo progetto può lasciare la config MCP locale nel file `.mcp.json`, ma il f
 
 ### 3. Configurare Codex localmente
 
-Codex deve conoscere il server MCP `n8n-mcp` tramite la sua configurazione utente o locale.
+Codex deve conoscere il server MCP `n8n-mcp` tramite la sua configurazione utente.
+
+Percorso corretto:
+
+```text
+~/.codex/config.toml
+```
 
 Passi pratici:
 
-1. Apri la configurazione di Codex sul tuo sistema.
+1. Apri `~/.codex/config.toml`.
 2. Aggiungi un server MCP HTTP con nome `n8n-mcp`.
 3. Imposta l'URL dell'endpoint MCP di n8n.
 4. Aggiungi l'header `Authorization: Bearer <token-jwt>`.
@@ -77,7 +82,7 @@ url = "https://n8n.claudiobattaglino.it/mcp-server/http"
 Authorization = "Bearer <token-jwt>"
 ```
 
-> Nota: il formato esatto dipende dalla build/installazione di Codex in uso. Il principio resta lo stesso: registrare il server MCP nella config locale del client, non nel repository.
+> Nota: il formato esatto dipende dalla build/installazione di Codex in uso. Il principio resta lo stesso: registrare il server MCP nella config utente del client, non nel repository.
 
 Un template pronto da copiare è disponibile in [DOC/codex-mcp-config.example.toml](./codex-mcp-config.example.toml).
 
@@ -86,7 +91,7 @@ Un template pronto da copiare è disponibile in [DOC/codex-mcp-config.example.to
 ### 4. Aprire il progetto in Codex
 
 1. Apri questa repository come workspace di Codex.
-2. Verifica che Codex stia leggendo la configurazione utente/local.
+2. Verifica che Codex stia leggendo `~/.codex/config.toml`.
 3. Controlla che il server `n8n-mcp` risulti disponibile.
 
 Se il server non compare:
@@ -112,7 +117,7 @@ Una volta attivo:
 ## Attività che faremo in questo progetto
 
 1. Tenere il file MCP locale fuori dal version control.
-2. Lasciare documentato il setup sia per Claude Code sia per Codex.
+2. Lasciare documentato il setup per Codex nel presente file.
 3. Usare Codex per leggere, analizzare e modificare i workflow n8n via MCP quando il server è disponibile.
 4. Verificare i workflow prima di qualsiasi deploy server-side.
 
@@ -120,11 +125,11 @@ Una volta attivo:
 
 ## Checklist operativa
 
-- [ ] n8n MCP abilitato su server
-- [ ] token JWT MCP generato
-- [ ] `.mcp.json` presente solo localmente
-- [ ] `.mcp.json` escluso da Git
-- [ ] server `n8n-mcp` registrato nella config locale di Codex
+- [x] n8n MCP abilitato su server
+- [x] token JWT MCP generato
+- [x] token JWT conservato solo localmente (non committato)
+- [x] `.mcp.json` escluso da Git
+- [ ] server `n8n-mcp` registrato in `~/.codex/config.toml`
 - [ ] Codex riavviato o ricaricato
 - [ ] test di lettura workflow riuscito
 - [ ] test di ricerca node type riuscito

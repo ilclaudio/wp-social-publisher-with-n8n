@@ -9,7 +9,7 @@
 
 [mcp_servers.n8n-mcp]
 type = "http"
-url = "https://n8n.claudiobattaglino.it/mcp-server/http"
+url = "https://n8n.myserver.org/mcp-server/http"
 
 [mcp_servers.n8n-mcp.headers]
 Authorization = "Bearer <token-jwt>"

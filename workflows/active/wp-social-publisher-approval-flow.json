@@ -44,17 +44,6 @@
       ]
     },
     {
-      "parameters": {},
-      "id": "start-unified-flow",
-      "name": "Start (Manual or Hourly)",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [
-        500,
-        320
-      ]
-    },
-    {
       "parameters": {
         "url": "={{$env.WSPAF_WP_SITE_URL}}/wp-json/wp/v2/posts",
         "sendQuery": true,
@@ -125,7 +114,7 @@
     },
     {
       "parameters": {
-        "content": "## Initial block\nThis workflow starts from `Manual Trigger` or `Schedule Trigger (Hourly)` and converges into `Start (Manual or Hourly)`.\n\n`Fetch WP Posts` reads the WordPress base URL from `$env.WSPAF_WP_SITE_URL` and queries the latest published posts.\n\nRuntime environment values must be defined on the remote n8n server/container:\n- `WSPAF_WP_SITE_URL`\n- `WSPAF_APPROVAL_EMAIL`\n- `WSPAF_APPROVAL_NAME`\n\nSecrets and third-party authentication must stay in n8n Credentials.",
+        "content": "## Initial block\nThis workflow starts from `Manual Trigger` or `Schedule Trigger (Hourly)`, both connected directly to `Fetch WP Posts`.\n\n`Fetch WP Posts` reads the WordPress base URL from `$env.WSPAF_WP_SITE_URL` and queries the latest published posts.\n\nRuntime environment values must be defined on the remote n8n server/container:\n- `WSPAF_WP_SITE_URL`\n- `WSPAF_APPROVAL_EMAIL`\n- `WSPAF_APPROVAL_NAME`\n\nSecrets and third-party authentication must stay in n8n Credentials.",
         "height": 320,
         "width": 520,
         "color": 7
@@ -216,20 +205,17 @@
     {
       "parameters": {
         "resource": "text",
-        "operation": "message",
+        "operation": "response",
         "modelId": {
           "__rl": true,
           "value": "gpt-4o-mini",
           "mode": "list",
           "cachedResultName": "GPT-4o mini"
         },
-        "messages": {
+        "responses": {
           "values": [
             {
-              "role": "system",
-              "content": "You are a social media copywriter.\n\nWrite a single post to announce a new blog article.\n\nStrict rules:\n- Maximum 280 characters total (URL and hashtag included)\n- Must include hashtag #n8n exactly once\n- End with the post URL\n- Write in the same language as the post title\n- Output ONLY the final message text, no explanations, no quotes, no line breaks"
-            },
-            {
+              "type": "text",
               "role": "user",
               "content": "={{ 'Title: ' + $json.titleText + '\\nExcerpt: ' + $json.excerptText + '\\nURL: ' + $json.postUrl }}"
             }
@@ -237,13 +223,14 @@
         },
         "simplify": true,
         "options": {
+          "instructions": "You are a social media copywriter.\n\nWrite a single post to announce a new blog article.\n\nStrict rules:\n- Maximum 280 characters total (URL and hashtag included)\n- Must include hashtag #n8n exactly once\n- End with the post URL\n- Write in the same language as the post title\n- Output ONLY the final message text, no explanations, no quotes, no line breaks",
           "temperature": 0.7
         }
       },
       "id": "generate-ai-message",
       "name": "Generate AI Message (max 280, #n8n)",
       "type": "@n8n/n8n-nodes-langchain.openAi",
-      "typeVersion": 1.8,
+      "typeVersion": 2.1,
       "position": [
         1800,
         220
@@ -309,7 +296,7 @@
       "main": [
         [
           {
-            "node": "Start (Manual or Hourly)",
+            "node": "Fetch WP Posts",
             "type": "main",
             "index": 0
           }
@@ -328,17 +315,6 @@
       ]
     },
     "Schedule Trigger (Hourly)": {
-      "main": [
-        [
-          {
-            "node": "Start (Manual or Hourly)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Start (Manual or Hourly)": {
       "main": [
         [
           {

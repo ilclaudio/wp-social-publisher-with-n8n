@@ -53,7 +53,7 @@ Aggiungi la seguente sezione (scegli una delle due opzioni):
 **Opzione A — token via variabile d'ambiente (consigliata):**
 
 ```toml
-[mcp_servers.n8n-mcp]
+[mcp_servers.n8n_mcp]
 url = "https://n8n.claudiobattaglino.it/mcp-server/http"
 bearer_token_env_var = "N8N_MCP_TOKEN"
 ```
@@ -63,16 +63,14 @@ Richiede di impostare `N8N_MCP_TOKEN=<token-jwt>` nelle variabili d'ambiente ute
 **Opzione B — header statico nel config (accettabile, file non committato):**
 
 ```toml
-[mcp_servers.n8n-mcp]
+[mcp_servers.n8n_mcp]
 url = "https://n8n.claudiobattaglino.it/mcp-server/http"
-
-[mcp_servers.n8n-mcp.http_headers]
-Authorization = "Bearer <token-jwt-generato-al-passo-2>"
+http_headers = { "authorization" = "Bearer <token-jwt-generato-al-passo-2>" }
 ```
 
-> **Attenzione alla sintassi:** usa `http_headers` (non `headers`) e non aggiungere `type = "http"` — Codex lo inferisce dall'URL.
+> **Attenzione alla sintassi:** usa `http_headers` (non `headers`), preferisci il nome server `n8n_mcp`, e non aggiungere `type = "http"` — Codex lo inferisce dall'URL.
 
-Un template pronto è disponibile in [DOC/codex-mcp-config.example.toml](./codex-mcp-config.example.toml).
+Un template pronto è disponibile in [DOC/config.example.toml](./config.example.toml).
 
 ### 4. Verificare che il progetto sia trusted
 
@@ -87,6 +85,8 @@ trust_level = "trusted"
 
 1. Riavvia Codex o ricarica la sessione.
 2. Chiedi a Codex di cercare i workflow esistenti. Se la connessione funziona, riceverai l'elenco dei workflow presenti sul server n8n.
+
+Se modifichi `~/.codex/config.toml` mentre Codex e gia aperto, il nuovo server MCP in genere non viene caricato nella sessione corrente: serve una nuova sessione o un riavvio dell'estensione/app.
 
 ---
 
@@ -127,6 +127,7 @@ Le due credenziali non interferiscono tra loro.
 
 - **Non committare mai `~/.codex/config.toml`** con il token JWT — è un file utente locale.
 - **Non committare mai `.env`** — contiene `WSPAF_N8N_API_KEY`.
+- **Non committare mai token reali nei file template in `DOC/`** — usa solo placeholder.
 - Se il token MCP viene compromesso, rigeneralo dalla pagina *Settings → MCP* di n8n e aggiorna `config.toml` localmente.
 
 ---
@@ -134,4 +135,4 @@ Le due credenziali non interferiscono tra loro.
 ## Riferimenti
 
 - Documentazione n8n MCP: [docs.n8n.io](https://docs.n8n.io)
-- Documentazione Codex MCP: [developers.openai.com/codex/mcp](https://developers.openai.com/codex/mcp)
+- Docs MCP per Codex/OpenAI: [developers.openai.com/learn/docs-mcp](https://developers.openai.com/learn/docs-mcp)

@@ -1,0 +1,22 @@
+# Codex MCP configuration example for n8n
+#
+# Copy the relevant section into ~/.codex/config.toml
+# and replace the placeholder with the real JWT from n8n Settings → MCP.
+#
+# IMPORTANT:
+# - do not commit the real token anywhere
+# - keep this file as a template only (no real token here)
+
+# --- Option A: token via environment variable (recommended) ---
+# Set N8N_MCP_TOKEN in your shell profile (e.g. ~/.bashrc or Windows user env vars)
+# then reference it here. Keeps secrets out of config files entirely.
+
+[mcp_servers.n8n-mcp]
+url = "https://n8n.claudiobattaglino.it/mcp-server/http"
+bearer_token_env_var = "N8N_MCP_TOKEN"
+
+# --- Option B: static header (acceptable for local-only config, never commit) ---
+# [mcp_servers.n8n-mcp]
+# url = "https://n8n.claudiobattaglino.it/mcp-server/http"
+# [mcp_servers.n8n-mcp.http_headers]
+# Authorization = "Bearer <token-jwt>"

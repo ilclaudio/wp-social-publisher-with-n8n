@@ -1,143 +1,137 @@
 # Configurazione MCP Server n8n con ChatGPT Codex
 
-## Obiettivo
+## Panoramica
 
-Abilitare il server MCP di n8n anche in **ChatGPT Codex**, riusando la stessa istanza MCP già configurata per Claude Code, ma con la configurazione locale corretta per Codex.
-
-Questo documento elenca i passaggi da fare e quelli che faremo in questo progetto per rendere il server MCP disponibile in Codex senza committare segreti nel repository.
+Questo documento descrive come abilitare il server MCP integrato di n8n e configurarlo per l'uso con ChatGPT Codex. Una volta configurato, Codex può leggere, creare, modificare, testare ed eseguire workflow n8n direttamente dalla chat, senza aprire l'interfaccia web.
 
 ---
 
-## Stato attuale del progetto
+## Concetti chiave
 
-- Il server MCP di n8n è abilitato e raggiungibile.
-- Per Codex, la config operativa va nel file utente [`~/.codex/config.toml`](https://developers.openai.com/learn/docs-mcp).
-- Il token JWT MCP **non va committato** nel repository.
+### Due ruoli distinti dell'MCP in n8n
+
+| Ruolo | Descrizione |
+|---|---|
+| **n8n come MCP server** | n8n espone i propri workflow come strumenti per AI client esterni (Codex, Claude, Lovable, ecc.) |
+| **Codex gestisce n8n via MCP** | Codex si connette all'endpoint MCP di n8n per leggere/creare/modificare workflow (quello che usiamo in questo progetto) |
+
+Questo documento riguarda il **secondo ruolo**.
+
+### Toggle "Available in MCP" (UI di n8n)
+
+Il toggle visibile nella pagina *Instance-level MCP* di n8n (e nei dettagli di ogni workflow) **non è necessario** per gestire i workflow da Codex. Serve solo per esporre un workflow come tool eseguibile da client AI esterni che usano n8n come server MCP.
 
 ---
 
-## Cosa serve
+## Passi di configurazione
 
-1. Un endpoint MCP di n8n attivo.
-2. Un token MCP JWT generato da n8n.
-3. Una configurazione locale di Codex che registri il server `n8n-mcp`.
-4. Un progetto aperto in Codex dalla root di questo repository.
+### 1. Abilitare la Public API di n8n
 
----
+1. Accedi all'interfaccia web di n8n.
+2. Vai in **Settings → API**.
+3. Abilita la Public API e genera una API key (questa è la `WSPAF_N8N_API_KEY` usata per gli script REST locali — non quella MCP).
 
-## Passi da fare
+### 2. Abilitare l'Instance-level MCP su n8n
 
-### 1. Verificare che n8n MCP sia attivo
+1. Vai in **Settings → MCP** (o cerca "Instance-level MCP" nel menu Settings).
+2. Attiva la funzionalità.
+3. Genera un **MCP API token** (JWT). Questo token è specifico per l'endpoint MCP e distinto dalla API key REST.
+4. Copia il token generato — verrà usato nel passo successivo.
 
-1. Accedi alla UI di n8n.
-2. Vai in `Settings → MCP`.
-3. Verifica che l'Instance-level MCP sia abilitato.
-4. Verifica che il token JWT MCP sia valido.
-5. Verifica l'URL dell'endpoint MCP, ad esempio:
+> Il token ha formato JWT con `"aud": "mcp-server-api"` e `"iss": "n8n"`.
 
-```text
-https://n8n.claudiobattaglino.it/mcp-server/http
+### 3. Configurare Codex con il token MCP
+
+La configurazione MCP di Codex va nel file utente `~/.codex/config.toml`. Per questo progetto il file è in:
+
+```
+C:\Users\<utente>\.codex\config.toml
 ```
 
----
+Aggiungi la seguente sezione (scegli una delle due opzioni):
 
-### 2. Tenere il token fuori dal repository
-
-1. Mantieni il token MCP solo in configurazione locale.
-2. Non committare `.mcp.json`.
-3. Verifica che `.gitignore` escluda `.mcp.json`.
-
-Questo progetto può lasciare la config MCP locale nel file `.mcp.json`, ma il file deve restare fuori da Git.
-
----
-
-### 3. Configurare Codex localmente
-
-Codex deve conoscere il server MCP `n8n-mcp` tramite la sua configurazione utente.
-
-Percorso corretto:
-
-```text
-~/.codex/config.toml
-```
-
-Passi pratici:
-
-1. Apri `~/.codex/config.toml`.
-2. Aggiungi un server MCP HTTP con nome `n8n-mcp`.
-3. Imposta l'URL dell'endpoint MCP di n8n.
-4. Aggiungi l'header `Authorization: Bearer <token-jwt>`.
-5. Salva la configurazione.
-6. Riavvia Codex o ricarica la sessione.
-
-Esempio concettuale:
+**Opzione A — token via variabile d'ambiente (consigliata):**
 
 ```toml
-# Esempio indicativo: adattare alla sintassi supportata dalla tua installazione Codex
 [mcp_servers.n8n-mcp]
-type = "http"
 url = "https://n8n.claudiobattaglino.it/mcp-server/http"
-
-[mcp_servers.n8n-mcp.headers]
-Authorization = "Bearer <token-jwt>"
+bearer_token_env_var = "N8N_MCP_TOKEN"
 ```
 
-> Nota: il formato esatto dipende dalla build/installazione di Codex in uso. Il principio resta lo stesso: registrare il server MCP nella config utente del client, non nel repository.
+Richiede di impostare `N8N_MCP_TOKEN=<token-jwt>` nelle variabili d'ambiente utente di Windows.
 
-Un template pronto da copiare è disponibile in [DOC/codex-mcp-config.example.toml](./codex-mcp-config.example.toml).
+**Opzione B — header statico nel config (accettabile, file non committato):**
 
----
+```toml
+[mcp_servers.n8n-mcp]
+url = "https://n8n.claudiobattaglino.it/mcp-server/http"
 
-### 4. Aprire il progetto in Codex
+[mcp_servers.n8n-mcp.http_headers]
+Authorization = "Bearer <token-jwt-generato-al-passo-2>"
+```
 
-1. Apri questa repository come workspace di Codex.
-2. Verifica che Codex stia leggendo `~/.codex/config.toml`.
-3. Controlla che il server `n8n-mcp` risulti disponibile.
+> **Attenzione alla sintassi:** usa `http_headers` (non `headers`) e non aggiungere `type = "http"` — Codex lo inferisce dall'URL.
 
-Se il server non compare:
+Un template pronto è disponibile in [DOC/codex-mcp-config.example.toml](./codex-mcp-config.example.toml).
 
-1. verifica che il token sia corretto;
-2. verifica che l'endpoint risponda;
-3. verifica che la configurazione locale di Codex sia nel file giusto;
-4. riavvia Codex.
+### 4. Verificare che il progetto sia trusted
 
----
+Il file `~/.codex/config.toml` deve contenere questo progetto come trusted, altrimenti Codex non legge la configurazione MCP:
 
-### 5. Verificare il funzionamento
+```toml
+[projects.'C:\SPAZIODATI\GoogleDriveLavoro\Progetti\PR-Automazioni con n8n\wp-social-publisher-with-n8n']
+trust_level = "trusted"
+```
 
-Una volta attivo:
+### 5. Riavviare Codex e verificare la connessione
 
-1. Chiedi a Codex di elencare i workflow n8n.
-2. Chiedi di leggere un workflow esistente.
-3. Chiedi di cercare i node type già presenti.
-4. Se la risposta arriva, il server MCP è correttamente attivo.
-
----
-
-## Attività che faremo in questo progetto
-
-1. Tenere il file MCP locale fuori dal version control.
-2. Lasciare documentato il setup per Codex nel presente file.
-3. Usare Codex per leggere, analizzare e modificare i workflow n8n via MCP quando il server è disponibile.
-4. Verificare i workflow prima di qualsiasi deploy server-side.
+1. Riavvia Codex o ricarica la sessione.
+2. Chiedi a Codex di cercare i workflow esistenti. Se la connessione funziona, riceverai l'elenco dei workflow presenti sul server n8n.
 
 ---
 
-## Checklist operativa
+## Cosa puoi fare con il server MCP configurato
 
-- [x] n8n MCP abilitato su server
-- [x] token JWT MCP generato
-- [x] token JWT conservato solo localmente (non committato)
-- [x] `.mcp.json` escluso da Git
-- [ ] server `n8n-mcp` registrato in `~/.codex/config.toml`
-- [ ] Codex riavviato o ricaricato
-- [ ] test di lettura workflow riuscito
-- [ ] test di ricerca node type riuscito
+| Operazione | Tool MCP |
+|---|---|
+| Cercare/elencare workflow | `search_workflows` |
+| Leggere il dettaglio di un workflow | `get_workflow_details` |
+| Creare un nuovo workflow da codice SDK | `create_workflow_from_code` |
+| Aggiornare un workflow esistente | `update_workflow` |
+| Archiviare un workflow | `archive_workflow` |
+| Attivare / disattivare un workflow | `publish_workflow` / `unpublish_workflow` |
+| Eseguire un workflow | `execute_workflow` |
+| Testare un workflow | `test_workflow` |
+| Leggere il risultato di un'esecuzione | `get_execution` |
+| Validare il codice prima del deploy | `validate_workflow` |
+| Cercare nodi disponibili su n8n | `search_nodes` |
+| Ottenere le definizioni TypeScript dei nodi | `get_node_types` |
+| Leggere la documentazione dell'SDK n8n | `get_sdk_reference` |
+
+---
+
+## Credenziali in gioco: nessun conflitto
+
+Il progetto usa due credenziali distinte per scopi diversi:
+
+| Credenziale | Dove si configura | Endpoint target | Scopo |
+|---|---|---|---|
+| `WSPAF_N8N_API_KEY` | Variabile d'ambiente locale (`.env`) | REST API `/api/v1/...` | Script di deploy, chiamate REST manuali |
+| JWT Bearer (`~/.codex/config.toml`) | File locale utente (non committato) | MCP endpoint `/mcp-server/http` | Connessione Codex ↔ n8n |
+
+Le due credenziali non interferiscono tra loro.
 
 ---
 
 ## Note di sicurezza
 
-- Non inserire segreti nei workflow JSON.
-- Non committare token JWT, API key o `.env`.
-- Se il token MCP cambia, rigeneralo su n8n e aggiorna la config locale.
+- **Non committare mai `~/.codex/config.toml`** con il token JWT — è un file utente locale.
+- **Non committare mai `.env`** — contiene `WSPAF_N8N_API_KEY`.
+- Se il token MCP viene compromesso, rigeneralo dalla pagina *Settings → MCP* di n8n e aggiorna `config.toml` localmente.
+
+---
+
+## Riferimenti
+
+- Documentazione n8n MCP: [docs.n8n.io](https://docs.n8n.io)
+- Documentazione Codex MCP: [developers.openai.com/codex/mcp](https://developers.openai.com/codex/mcp)

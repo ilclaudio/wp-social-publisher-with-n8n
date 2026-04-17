@@ -145,6 +145,19 @@ Esempio:
 \\wsl$\Ubuntu-20.04\home\claudio\.codex
 ```
 
+Se vuoi aprire da Windows la cartella Linux in cui ti trovi gia' dentro WSL, dal terminale puoi usare:
+
+```bash
+explorer.exe .
+```
+
+### Nota pratica sui percorsi
+
+- I file Windows dentro WSL sono montati sotto `/mnt`, quindi `C:\` diventa `/mnt/c` e `D:\` diventa `/mnt/d`.
+- Se il progetto sta in `/mnt/c/...`, da Windows lo stesso percorso e' semplicemente `C:\...`.
+- Per i file Linux "puri" della distro, usa `\\wsl$\...` oppure `\\wsl.localhost\...`.
+- Evita di modificare i file interni della distro passando da percorsi sotto `AppData`, perche' puoi corrompere o compromettere il filesystem WSL.
+
 ---
 
 ## 6. Fermare una distro o tutto WSL

@@ -10,34 +10,36 @@ Configuration must use environment variables with the `WSPAF_` project prefix.
 
 ## Current workflow nodes
 
-### Implemented nodes
+### Main flow
 
-- `Manual Trigger`: starts the workflow manually for tests and ad hoc runs.
-- `Schedule Trigger (Hourly)`: starts the workflow automatically every hour.
-- `Start (Manual or Hourly)`: merges the two start paths into a single execution path.
-- `Fetch WP Posts`: reads recent published posts from the WordPress REST API using `$env.WSPAF_WP_SITE_URL`.
-- `Fetch WP Posts`: reads recent published posts from the WordPress REST API using `$env.WSPAF_WP_SITE_URL`, requesting both `_links` and `_embedded` so featured media can be extracted reliably.
-- `Debug - Count fetched posts`: logs how many posts were fetched and prints a short preview of the first items.
-- `Detect New Posts (date_gmt)`: keeps only posts whose `date_gmt` falls within the recent detection window and adds `detectedAtUtc`.
-- `Initial Block Notes`: sticky note that documents the purpose of the opening block and the required runtime variables.
-- `Deduplicate via Data Store`: uses the `Remove Duplicates` node to skip posts whose WordPress `id` was already processed in previous executions. It uses workflow scope so its history can also be cleared by the maintenance branch.
-- `Debug - Deduplicate summary`: logs how many recent posts were detected, how many remain after deduplication, and which post IDs were skipped as duplicates.
-- `Manual Trigger (Clear Dedupe History)`: starts a maintenance-only branch to reset the stored deduplication history during debugging.
-- `Clear Dedupe History`: clears the workflow-scope deduplication history used by the `Remove Duplicates` node.
-- `Debug - Clear dedupe history`: logs a confirmation payload after the deduplication history reset runs.
-- `Extract URL and Featured Image`: normalizes title, excerpt, post URL, and featured image data from the WordPress response.
-- `Generate AI Message (max 280, #n8n)`: calls OpenAI (`gpt-4o-mini`) via `@n8n/n8n-nodes-langchain.openAi` (typeVersion 1.8, resource `text`, operation `message`) using the `OpenAI account` credential. Input fields: `titleText`, `excerptText`, `postUrl`. The prompt enforces language match, max 280 chars, `#n8n` hashtag, URL at the end. `simplify: true` — output field is `message` (string).
-- `Validate AI Message`: post-processes the OpenAI response to guarantee constraints. Extracts text from the `message` field, injects `#n8n` if missing, truncates to 280 chars preserving URL and hashtag. Adds `socialMessage`, `socialMessageLength`, and `socialMessageValid` fields to the payload.
-- `Debug - AI message`: logs the final `socialMessage` text, its length, and validity flag for each processed post. Output visible in the node's **Logs** tab inside the n8n execution detail view.
+| Node | Type | What it does |
+|---|---|---|
+| `Manual Trigger` | Trigger | Starts the workflow on demand for tests. |
+| `Schedule Trigger (Hourly)` | Trigger | Starts the workflow automatically every hour. |
+| `Start (Manual or Hourly)` | NoOp | Merges the two trigger paths into one execution path. |
+| `Fetch WP Posts` | HTTP Request | Calls the WordPress REST API (`$env.WSPAF_WP_SITE_URL`) and fetches the 20 most recent published posts, including `_embedded` data for featured media. |
+| `Debug - Count fetched posts` | Code | Logs the number of posts returned and a short preview of the first items. |
+| `Detect New Posts (date_gmt)` | Code | Keeps only posts published within the last 70 minutes (based on `date_gmt`). Adds `detectedAtUtc` to each item. |
+| `Deduplicate via Data Store` | Remove Duplicates | Skips posts whose WordPress `id` was already seen in a previous execution (workflow-scope persistent history, up to 10 000 entries). |
+| `Debug - Deduplicate summary` | Code | Logs how many posts were detected, kept, and skipped as duplicates. |
+| `Extract URL and Featured Image` | Code | Normalises each post into clean fields: `titleText`, `excerptText`, `postUrl`, `imageUrl`, `hasFeaturedImage`. Strips HTML tags and decodes entities from title and excerpt. |
+| `Generate AI Message (max 280, #n8n)` | `@n8n/n8n-nodes-langchain.openAi` | Calls OpenAI `gpt-4o-mini` (credential `OpenAI account`) with a system prompt that enforces max 280 chars, `#n8n` hashtag, URL at the end, and language matching the post title. Input: `titleText`, `excerptText`, `postUrl`. |
+| `Validate AI Message` | Code | Guarantees the AI output respects the constraints regardless of what OpenAI returned. Injects `#n8n` if missing, truncates to 280 chars preserving URL and hashtag. Adds `socialMessage`, `socialMessageLength`, `socialMessageValid` to the payload. |
+| `Debug - AI message` | Code | Logs the final `socialMessage` text, length, and validity for each post. Visible in the node's **Logs** tab in the n8n execution detail view. |
+| `Approval Gate (Email)` | — | **Placeholder** — not implemented. Will send an approval request email per channel. |
+| `Publish to Twitter/X` | — | **Placeholder** — not implemented. Will publish approved content to Twitter/X. |
+
+### Maintenance branch (separate from main flow)
+
+| Node | What it does |
+|---|---|
+| `Manual Trigger (Clear Dedupe History)` | Starts a standalone maintenance branch. |
+| `Clear Dedupe History` | Resets the workflow-scope deduplication history (useful during debugging to re-process already-seen posts). |
+| `Debug - Clear dedupe history` | Logs a confirmation payload after the reset. |
 
 ### Credential deploy note
 
-The `Generate AI Message` node references the `OpenAI account` credential by name with an empty `id` field in the local JSON. Before deploying to the n8n server via API, resolve the actual credential ID with `GET /api/v1/credentials` and inject it into the request payload at deploy time. Do not hardcode the ID in the source file — it is instance-specific and not portable across n8n installations.
-
-### Placeholder nodes not implemented yet
-
-- `Approval Gate (Email)`: not implemented yet; it should handle the approval request and decision flow.
-- `Publish to Twitter/X`: not implemented yet; it should publish only approved content to Twitter/X.
+The `Generate AI Message` node stores an empty `id` in the local JSON for the `OpenAI account` credential. The deploy script (`scripts/deploy.ps1`) resolves the actual credential ID at deploy time via `GET /api/v1/credentials` and injects it into the request payload. Never hardcode the ID in the source file — it is instance-specific.
 
 ## Remote deploy procedure
 

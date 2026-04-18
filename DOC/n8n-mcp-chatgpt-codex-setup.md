@@ -25,13 +25,7 @@ Il toggle visibile nella pagina *Instance-level MCP* di n8n (e nei dettagli di o
 
 ## Passi di configurazione
 
-### 1. Abilitare la Public API di n8n
-
-1. Accedi all'interfaccia web di n8n.
-2. Vai in **Settings → API**.
-3. Abilita la Public API e genera una API key (questa è la `WSPAF_N8N_API_KEY` usata per gli script REST locali — non quella MCP).
-
-### 2. Abilitare l'Instance-level MCP su n8n
+### 1. Abilitare l'Instance-level MCP su n8n
 
 1. Vai in **Settings → MCP** (o cerca "Instance-level MCP" nel menu Settings).
 2. Attiva la funzionalità.
@@ -40,31 +34,40 @@ Il toggle visibile nella pagina *Instance-level MCP* di n8n (e nei dettagli di o
 
 > Il token ha formato JWT con `"aud": "mcp-server-api"` e `"iss": "n8n"`.
 
-### 3. Configurare Codex con il token MCP
+### 2. Scegliere il file di configurazione corretto
 
-La configurazione MCP di Codex va nel file utente `~/.codex/config.toml`. Per questo progetto il file è in:
+Per questo progetto, Codex legge i server MCP dal file utente dell'ambiente in cui sta realmente girando. La configurazione non va nel repository.
 
-```
-C:\Users\<utente>\.codex\config.toml
-```
+| Dove gira Codex | File da usare |
+|---|---|
+| **WSL/Linux** | `~/.codex/config.toml` |
+| **Windows nativo** | `C:\Users\<utente>\.codex\config.toml` |
 
-Aggiungi la seguente sezione (scegli una delle due opzioni):
+Regola pratica:
+- se apri VS Code in modalita WSL, usa la home di WSL
+- se usi Codex lato Windows, usa la home utente di Windows
+
+### 3. Aggiungere il server MCP di n8n
+
+Nel `config.toml` dell'ambiente scelto aggiungi una sezione come una delle seguenti.
 
 **Opzione A — token via variabile d'ambiente (consigliata):**
 
 ```toml
 [mcp_servers.n8n_mcp]
-url = "https://n8n.claudiobattaglino.it/mcp-server/http"
+url = "https://<tuo-dominio-n8n>/mcp-server/http"
 bearer_token_env_var = "N8N_MCP_TOKEN"
 ```
 
-Richiede di impostare `N8N_MCP_TOKEN=<token-jwt>` nelle variabili d'ambiente utente di Windows.
+Imposta `N8N_MCP_TOKEN` nello stesso ambiente in cui gira Codex:
+- in WSL, come variabile dell'ambiente Linux/WSL
+- in Windows nativo, come variabile utente di Windows
 
 **Opzione B — header statico nel config (accettabile, file non committato):**
 
 ```toml
 [mcp_servers.n8n_mcp]
-url = "https://n8n.claudiobattaglino.it/mcp-server/http"
+url = "https://<tuo-dominio-n8n>/mcp-server/http"
 http_headers = { "authorization" = "Bearer <token-jwt-generato-al-passo-2>" }
 ```
 
@@ -74,9 +77,7 @@ Un template pronto è disponibile in [DOC/config.example.toml](./config.example.
 
 ### 4. Verificare che il progetto sia trusted
 
-Il file `~/.codex/config.toml` deve contenere questo progetto come trusted, altrimenti Codex non legge la configurazione MCP.
-
-Punto importante: il path deve combaciare con l'ambiente in cui gira Codex.
+Nel `config.toml` dell'ambiente corrente aggiungi anche questo progetto come trusted.
 
 - Se Codex gira in **WSL/Linux**, usa il path `/mnt/c/...`.
 - Se Codex gira in **Windows nativo**, usa il path `C:\...`.
@@ -89,14 +90,18 @@ Nel contesto di questo progetto, quando Codex gira in WSL, una configurazione fu
 trust_level = "trusted"
 ```
 
-Se vuoi evitare errori, usa esattamente il valore di `cwd` o l'output di `pwd` della sessione Codex corrente.
+Per evitare errori, usa esattamente il valore di `cwd` o l'output di `pwd` della sessione Codex corrente.
 
 ### 5. Riavviare Codex e verificare la connessione
 
 1. Riavvia Codex o ricarica la sessione.
 2. Chiedi a Codex di cercare i workflow esistenti. Se la connessione funziona, riceverai l'elenco dei workflow presenti sul server n8n.
 
-Se modifichi `~/.codex/config.toml` mentre Codex e gia aperto, il nuovo server MCP in genere non viene caricato nella sessione corrente: serve una nuova sessione o un riavvio dell'estensione/app.
+Se modifichi `config.toml` mentre Codex e gia aperto, il nuovo server MCP in genere non viene caricato nella sessione corrente: serve una nuova sessione o un riavvio dell'estensione/app.
+
+### 6. Nota sulla REST API del progetto
+
+Questo progetto usa anche la Public API REST di n8n per script locali di deploy e verifica, tramite `WSPAF_N8N_API_KEY`. Questa API key e separata dal token MCP e non serve per configurare Codex via MCP.
 
 ---
 
@@ -127,7 +132,7 @@ Il progetto usa due credenziali distinte per scopi diversi:
 | Credenziale | Dove si configura | Endpoint target | Scopo |
 |---|---|---|---|
 | `WSPAF_N8N_API_KEY` | Variabile d'ambiente locale (`.env`) | REST API `/api/v1/...` | Script di deploy, chiamate REST manuali |
-| JWT Bearer (`~/.codex/config.toml`) | File locale utente (non committato) | MCP endpoint `/mcp-server/http` | Connessione Codex ↔ n8n |
+| JWT Bearer (`config.toml`) | File locale utente dell'ambiente corrente | MCP endpoint `/mcp-server/http` | Connessione Codex ↔ n8n |
 
 Le due credenziali non interferiscono tra loro.
 
@@ -135,11 +140,11 @@ Le due credenziali non interferiscono tra loro.
 
 ## Note di sicurezza
 
-- **Non committare mai `~/.codex/config.toml`** con il token JWT — è un file utente locale.
+- **Non committare mai il tuo `config.toml` utente** con il token JWT — è un file locale dell'ambiente corrente.
 - **Non committare mai `.env`** — contiene `WSPAF_N8N_API_KEY`.
 - **Non committare mai token reali nei file template in `DOC/`** — usa solo placeholder.
-- **Non copiare nei documenti di progetto il contenuto reale di `http_headers.authorization`** dal tuo `config.toml`.
-- Se il token MCP viene compromesso, rigeneralo dalla pagina *Settings → MCP* di n8n e aggiorna `config.toml` localmente.
+- **Non copiare nei documenti di progetto il contenuto reale di `http_headers.authorization`** dal tuo file utente.
+- Se il token MCP viene compromesso, rigeneralo dalla pagina *Settings → MCP* di n8n e aggiorna il file locale dell'ambiente in uso.
 
 ---
 

@@ -2,24 +2,22 @@
 
 ## Panoramica
 
-Questo documento descrive come abilitare il server MCP integrato di n8n e configurarlo per l'uso con Claude Code in Visual Studio Code. Una volta configurato, Claude Code può leggere, creare, modificare, testare ed eseguire workflow n8n direttamente dalla chat, senza aprire l'interfaccia web.
+Questo documento descrive come configurare il server MCP di n8n per l'uso con Claude Code in VSCode, nel contesto del progetto **WP Social Publisher Approval Flow**. Una volta configurato, Claude Code può leggere, creare, modificare, testare ed eseguire workflow n8n direttamente dalla chat, senza aprire l'interfaccia web di n8n.
+
+Il server n8n di questo progetto è raggiungibile su `n8n.claudiobattaglino.it`.
 
 ---
 
-## Concetti chiave
+## Concetto chiave: due ruoli dell'MCP in n8n
 
-### Due ruoli distinti dell'MCP in n8n
+n8n può usare MCP in due modi distinti:
 
 | Ruolo | Descrizione |
 |---|---|
-| **n8n come MCP server** | n8n espone i propri workflow come strumenti per AI client esterni (Claude Desktop, Lovable, ecc.) |
-| **Claude Code gestisce n8n via MCP** | Claude Code si connette all'endpoint MCP di n8n per leggere/creare/modificare workflow (quello che usiamo in questo progetto) |
+| **n8n come MCP server** | n8n espone i propri workflow come tool per AI client esterni |
+| **Claude Code gestisce n8n via MCP** | Claude Code si connette all'endpoint MCP di n8n per gestire i workflow |
 
-Questo documento riguarda il **secondo ruolo**.
-
-### Toggle "Available in MCP" (UI di n8n)
-
-Il toggle visibile nella pagina *Instance-level MCP* di n8n (e nei dettagli di ogni workflow) **non è necessario** per gestire i workflow da Claude Code. Serve solo per esporre un workflow come tool eseguibile da client AI esterni che usano n8n come server MCP.
+Questo documento riguarda il **secondo ruolo**. Il toggle "Available in MCP" visibile nella UI di n8n non è necessario per questo scopo: serve solo per esporre workflow come tool eseguibili da client AI esterni.
 
 ---
 
@@ -27,58 +25,68 @@ Il toggle visibile nella pagina *Instance-level MCP* di n8n (e nei dettagli di o
 
 ### 1. Abilitare la Public API di n8n
 
-1. Accedi all'interfaccia web di n8n.
-2. Vai in **Settings → API**.
-3. Abilita la Public API e genera una API key (questa è la `WSPAF_N8N_API_KEY` usata per gli script REST locali — non quella MCP).
+1. Accedi all'interfaccia web di n8n → **Settings → API**.
+2. Abilita la Public API e genera una API key.
 
-### 2. Abilitare l'Instance-level MCP su n8n
+Questa chiave corrisponde alla variabile `WSPAF_N8N_API_KEY` usata dagli script REST locali — è distinta dal token MCP.
 
-1. Vai in **Settings → MCP** (o cerca "Instance-level MCP" nel menu Settings).
+### 2. Abilitare l'Instance-level MCP e generare il token
+
+1. Vai in **Settings → MCP**.
 2. Attiva la funzionalità.
-3. Genera un **MCP API token** (JWT). Questo token è specifico per l'endpoint MCP e distinto dalla API key REST.
-4. Copia il token generato — verrà usato nel passo successivo.
+3. Genera un **MCP API token** (formato JWT con `"aud": "mcp-server-api"`).
+4. Copia il token — servirà nel passo successivo.
 
-> Il token ha formato JWT con `"aud": "mcp-server-api"` e `"iss": "n8n"`.
+### 3. Configurare il server MCP in Claude Code
 
-### 3. Creare il file `.mcp.json` nel progetto
+Ci sono tre modalità alternative: sceglierne una è sufficiente, non è necessario combinarle.
 
-Nella root del progetto crea il file `.mcp.json` con questa struttura:
+| Scope | Metodo | Disponibile in |
+|---|---|---|
+| **Progetto** | File `.mcp.json` nella root del repository | Solo quel progetto |
+| **Locale** | `.claude/settings.local.json` nella root del progetto | Solo quel progetto, non versionato |
+| **Utente (globale)** | Comando CLI `claude mcp add --scope user` | Tutti i progetti |
+
+**Opzione A — Progetto (`.mcp.json`):**
 
 ```json
 {
   "mcpServers": {
     "n8n-mcp": {
       "type": "http",
-      "url": "https://<tuo-dominio-n8n>/mcp-server/http",
+      "url": "https://n8n.claudiobattaglino.it/mcp-server/http",
       "headers": {
-        "Authorization": "Bearer <token-jwt-generato-al-passo-2>"
+        "Authorization": "Bearer <token-jwt-dal-passo-2>"
       }
     }
   }
 }
 ```
 
-Sostituisci:
-- `<tuo-dominio-n8n>` con il dominio o IP del tuo server n8n (es. `n8n.example.com`)
-- `<token-jwt-generato-al-passo-2>` con il token copiato al passo precedente
+Il file `.mcp.json` è già escluso dal `.gitignore` di questo progetto — non va mai committato.
 
-### 4. Aggiungere `.mcp.json` al `.gitignore`
+**Opzione B — Utente globale (valido per tutti i progetti):**
 
-Il file `.mcp.json` contiene un token segreto e **non deve mai essere committato** su Git. Verifica che il `.gitignore` contenga la riga:
+Esegui questo comando dal terminale, **fuori da una sessione Claude Code attiva**. Il comando va eseguito una sola volta e persiste dopo il riavvio di VSCode.
 
-```
-.mcp.json
+```powershell
+claude mcp add --scope user n8n-mcp --transport http "https://n8n.claudiobattaglino.it/mcp-server/http" --header "Authorization: Bearer <token-jwt-dal-passo-2>"
 ```
 
-### 5. Verificare la connessione da Claude Code in VSCode
+> Note sulla configurazione utente:
+> - `C:\Users\<utente>\.claude\settings.json` **non supporta** il campo `mcpServers`.
+> - `C:\Users\<utente>\.claude.json` contiene le credenziali di autenticazione Claude, non la config MCP.
+> - Il file `.mcp.json` **non viene letto** dalla home di Windows: funziona solo nella root del progetto.
+
+### 4. Verificare la connessione
 
 1. Apri il progetto in VSCode con l'estensione Claude Code attiva.
 2. Avvia una sessione Claude Code.
-3. Chiedi a Claude di cercare i workflow esistenti. Se la connessione funziona, riceverai l'elenco dei workflow presenti sul server n8n.
+3. Chiedi a Claude di cercare i workflow esistenti — se la connessione funziona, riceverai l'elenco dei workflow presenti su n8n.
 
 ---
 
-## Cosa puoi fare con il server MCP configurato
+## Operazioni disponibili con il server MCP configurato
 
 | Operazione | Tool MCP |
 |---|---|
@@ -98,29 +106,13 @@ Il file `.mcp.json` contiene un token segreto e **non deve mai essere committato
 
 ---
 
-## Credenziali in gioco: nessun conflitto
+## Credenziali del progetto
 
-Il progetto usa due credenziali distinte per scopi diversi:
+Il progetto usa due credenziali distinte che non interferiscono tra loro:
 
-| Credenziale | Dove si configura | Endpoint target | Scopo |
-|---|---|---|---|
-| `WSPAF_N8N_API_KEY` | Variabile d'ambiente locale (`.env`) | REST API `/api/v1/...` | Script di deploy, chiamate REST manuali |
-| JWT Bearer (`.mcp.json`) | File `.mcp.json` (non committato) | MCP endpoint `/mcp-server/http` | Connessione Claude Code ↔ n8n |
+| Credenziale | Dove si configura | Scopo |
+|---|---|---|
+| `WSPAF_N8N_API_KEY` | Variabile d'ambiente locale (`.env`) | Script di deploy e chiamate REST |
+| JWT Bearer MCP | `.mcp.json` o config utente Claude Code | Connessione Claude Code ↔ n8n |
 
-Le due credenziali non interferiscono tra loro.
-
----
-
-## Note di sicurezza
-
-- **Non committare mai `.mcp.json`** su Git — contiene il token JWT.
-- **Non committare mai `.env`** — contiene `WSPAF_N8N_API_KEY`.
-- Entrambi i file sono già esclusi dal `.gitignore` del progetto.
-- Se il token MCP viene compromesso, rigeneralo dalla pagina *Settings → MCP* di n8n e aggiorna il `.mcp.json` localmente.
-
----
-
-## Riferimenti
-
-- Documentazione n8n MCP: [docs.n8n.io](https://docs.n8n.io)
-- Claude Code MCP: configurazione tramite `.mcp.json` nella root del progetto
+Entrambi i file che contengono questi valori (`.env` e `.mcp.json`) sono esclusi dal `.gitignore`. Se il token MCP viene compromesso, rigeneralo da **Settings → MCP** su n8n e aggiorna la configurazione locale.

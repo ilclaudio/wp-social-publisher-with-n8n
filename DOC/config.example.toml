@@ -1,7 +1,9 @@
 # Codex MCP configuration example for n8n
 #
-# Copy this into the user-level Codex config file supported by your install
-# and replace the placeholder token with the real JWT from n8n.
+# Copy this into the user-level Codex config file of the environment where
+# Codex is actually running:
+# - WSL/Linux: ~/.codex/config.toml
+# - Windows native: C:\Users\<user>\.codex\config.toml
 #
 # IMPORTANT:
 # - do not commit the real token
@@ -9,9 +11,15 @@
 # - trust the exact project path used by Codex in the current environment
 #   (WSL uses /mnt/c/... paths, native Windows may use C:\... paths)
 
+## Recommended option: read the token from an environment variable
 [mcp_servers.n8n_mcp]
-url = "https://n8n.myserver.org/mcp-server/http"
-http_headers = { "authorization" = "Bearer <token-jwt>" }
+url = "https://<your-n8n-domain>/mcp-server/http"
+bearer_token_env_var = "N8N_MCP_TOKEN"
+
+## Alternative option: static header in the local user config
+#[mcp_servers.n8n_mcp]
+#url = "https://<your-n8n-domain>/mcp-server/http"
+#http_headers = { "authorization" = "Bearer <token-jwt>" }
 
 [projects."/mnt/c/path/to/your/project"]
 trust_level = "trusted"

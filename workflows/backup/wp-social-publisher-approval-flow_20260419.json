@@ -270,109 +270,12 @@
       "position": [2840, 220]
     },
     {
-      "parameters": {
-        "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
-          "conditions": [{
-            "leftValue": "={{ $('Validate AI Message').item.json.hasFeaturedImage }}",
-            "rightValue": true,
-            "operator": { "type": "boolean", "operation": "true" }
-          }],
-          "combinator": "and"
-        }
-      },
-      "id": "has-image-twitter",
-      "name": "Has Image? (Twitter)",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
+      "parameters": {},
+      "id": "publish-twitter-x",
+      "name": "Publish to Twitter/X",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
       "position": [3100, 120]
-    },
-    {
-      "parameters": {
-        "url": "={{ $('Validate AI Message').item.json.imageUrl }}",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file",
-              "outputPropertyName": "data"
-            }
-          }
-        }
-      },
-      "id": "fetch-image-binary",
-      "name": "Fetch Image Binary",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [3360, 20]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://upload.twitter.com/1.1/media/upload.json",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "twitterOAuth1Api",
-        "sendBody": true,
-        "contentType": "multipart-form-data",
-        "bodyParameters": {
-          "parameters": [{
-            "parameterType": "formBinaryData",
-            "name": "media",
-            "inputDataFieldName": "data"
-          }]
-        },
-        "options": {}
-      },
-      "id": "upload-media-twitter",
-      "name": "Upload Media to Twitter",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [3620, 20],
-      "credentials": {
-        "twitterOAuth1Api": {
-          "id": "",
-          "name": "X OAuth account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "resource": "tweet",
-        "operation": "create",
-        "text": "={{ $('Validate AI Message').item.json.socialMessage }}",
-        "additionalFields": {
-          "attachments": "={{ $json.media_id_string }}"
-        }
-      },
-      "id": "post-tweet-with-image",
-      "name": "Post Tweet with Image",
-      "type": "n8n-nodes-base.twitter",
-      "typeVersion": 2,
-      "position": [3880, 20],
-      "credentials": {
-        "twitterOAuth2Api": {
-          "id": "",
-          "name": "X OAuth2 account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "resource": "tweet",
-        "operation": "create",
-        "text": "={{ $('Validate AI Message').item.json.socialMessage }}",
-        "additionalFields": {}
-      },
-      "id": "post-tweet",
-      "name": "Post Tweet",
-      "type": "n8n-nodes-base.twitter",
-      "typeVersion": 2,
-      "position": [3360, 220],
-      "credentials": {
-        "twitterOAuth2Api": {
-          "id": "",
-          "name": "X OAuth2 account"
-        }
-      }
     },
     {
       "parameters": {},
@@ -381,66 +284,6 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [3100, 320]
-    },
-    {
-      "parameters": {
-        "fromEmail": "={{ $env.WSPAF_SENDER_EMAIL }}",
-        "toEmail": "={{ $env.WSPAF_APPROVAL_EMAIL }}",
-        "subject": "={{ '✓ Pubblicato su X con immagine: ' + $('Validate AI Message').item.json.titleText }}",
-        "message": "=<p>Il post &egrave; stato approvato e pubblicato su X con immagine.</p><p><strong>Titolo:</strong> {{ $('Validate AI Message').item.json.titleText }}</p><p><strong>URL:</strong> <a href=\"{{ $('Validate AI Message').item.json.postUrl }}\">{{ $('Validate AI Message').item.json.postUrl }}</a></p><p><strong>Messaggio pubblicato:</strong> {{ $('Validate AI Message').item.json.socialMessage }}</p>",
-        "options": {}
-      },
-      "id": "notify-published-with-image",
-      "name": "Notify - Published with Image",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [4140, 20],
-      "credentials": {
-        "smtp": {
-          "id": "",
-          "name": "SMTP Account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "fromEmail": "={{ $env.WSPAF_SENDER_EMAIL }}",
-        "toEmail": "={{ $env.WSPAF_APPROVAL_EMAIL }}",
-        "subject": "={{ '✓ Pubblicato su X: ' + $('Validate AI Message').item.json.titleText }}",
-        "message": "=<p>Il post &egrave; stato approvato e pubblicato su X (senza immagine).</p><p><strong>Titolo:</strong> {{ $('Validate AI Message').item.json.titleText }}</p><p><strong>URL:</strong> <a href=\"{{ $('Validate AI Message').item.json.postUrl }}\">{{ $('Validate AI Message').item.json.postUrl }}</a></p><p><strong>Messaggio pubblicato:</strong> {{ $('Validate AI Message').item.json.socialMessage }}</p>",
-        "options": {}
-      },
-      "id": "notify-published-no-image",
-      "name": "Notify - Published without Image",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [3620, 220],
-      "credentials": {
-        "smtp": {
-          "id": "",
-          "name": "SMTP Account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "fromEmail": "={{ $env.WSPAF_SENDER_EMAIL }}",
-        "toEmail": "={{ $env.WSPAF_APPROVAL_EMAIL }}",
-        "subject": "={{ '✗ Non pubblicato: ' + $('Validate AI Message').item.json.titleText }}",
-        "message": "=<p>Il post non &egrave; stato pubblicato su X: approvazione rifiutata o scaduta (24h).</p><p><strong>Titolo:</strong> {{ $('Validate AI Message').item.json.titleText }}</p><p><strong>URL:</strong> <a href=\"{{ $('Validate AI Message').item.json.postUrl }}\">{{ $('Validate AI Message').item.json.postUrl }}</a></p>",
-        "options": {}
-      },
-      "id": "notify-not-approved",
-      "name": "Notify - Not Approved",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [3360, 320],
-      "credentials": {
-        "smtp": {
-          "id": "",
-          "name": "SMTP Account"
-        }
-      }
     }
   ],
   "connections": {
@@ -488,30 +331,9 @@
     },
     "Approved?": {
       "main": [
-        [{ "node": "Has Image? (Twitter)", "type": "main", "index": 0 }],
+        [{ "node": "Publish to Twitter/X", "type": "main", "index": 0 }],
         [{ "node": "Skip - Not Approved", "type": "main", "index": 0 }]
       ]
-    },
-    "Has Image? (Twitter)": {
-      "main": [
-        [{ "node": "Fetch Image Binary", "type": "main", "index": 0 }],
-        [{ "node": "Post Tweet", "type": "main", "index": 0 }]
-      ]
-    },
-    "Fetch Image Binary": {
-      "main": [[{ "node": "Upload Media to Twitter", "type": "main", "index": 0 }]]
-    },
-    "Upload Media to Twitter": {
-      "main": [[{ "node": "Post Tweet with Image", "type": "main", "index": 0 }]]
-    },
-    "Post Tweet with Image": {
-      "main": [[{ "node": "Notify - Published with Image", "type": "main", "index": 0 }]]
-    },
-    "Post Tweet": {
-      "main": [[{ "node": "Notify - Published without Image", "type": "main", "index": 0 }]]
-    },
-    "Skip - Not Approved": {
-      "main": [[{ "node": "Notify - Not Approved", "type": "main", "index": 0 }]]
     }
   },
   "settings": {

@@ -1,76 +1,64 @@
 # AI_BEHAVIOR.md
 
 ## Purpose
-Operational rules for AI assistants working on this codebase.
 
+Reusable operating rules for AI assistants collaborating on n8n-oriented codebases.
+
+Project-specific variables, trigger phrases, workflow paths, and deployment targets belong in `AGENTS/PROJECT.md`.
 
 ## Execution Rules
+
 - Be concise, precise, and action-oriented.
 - Work one objective at a time, end-to-end.
-- Ask clarifying questions only when ambiguity blocks implementation.
+- Ask clarifying questions only when ambiguity blocks implementation or creates material risk.
 - After meaningful progress, summarize what changed and what remains.
-- Be proactive: when a task is completed, always propose the next best step based on the current discussion context, `AGENTS/IMPLEMENTATION_TRACK.md`, and the project objective defined in `AGENTS/PROJECT.md`.
-- Keep quality gates active: security, accessibility, maintainability.
+- Propose the next best step after completing a task.
+- Keep quality gates active: security, maintainability, and operational reliability.
 
+## Safety Rules
 
-## Learning Support
-When useful, explain the theory behind choices (n8n internals, security, architecture, standards), especially if the user shows knowledge gaps or asks for deeper understanding.
-Keep explanations practical and tied to the current code.
+- Never hardcode secrets, API keys, passwords, tokens, cookies, or personal data in workflow JSON or repository-tracked documentation.
+- Before any remote deploy, activation, deactivation, or equivalent server-side change, ask for explicit user confirmation unless the project entry files define an approved trigger phrase.
+- If the repository keeps active workflow files locally, follow the backup/replacement convention defined in `AGENTS/PROJECT.md` before overwriting them.
 
+## n8n Interaction Strategy
 
-## Trigger Commands
-Use the following trigger patterns and workflows.
+- Prefer MCP for discovery, node lookup, validation, workflow inspection, and execution analysis when MCP is available.
+- Use REST API (`scripts/deploy.ps1`) as the primary deploy path. MCP `update_workflow` is the fallback when the REST API is unavailable.
+- Keep AI-session connectivity separate from workflow runtime configuration.
 
-### Deploy workflow to n8n server
-Trigger phrases:
-- `Aggiorna il flusso sul server`
-- `Fai il deploy del flusso sul server`
-- `Update the workflow on the server`
-- `Deploy the workflow to the server`
+## Node Type Resolution
 
-Expected behavior:
-- Treat the trigger phrase itself as explicit user confirmation for remote deploy.
-- Before deploying, run `validate_workflow` via MCP to catch errors in the workflow code early.
-- Use PowerShell first, not bash/WSL, to read `WSPAF_N8N_BASE_URL` and `WSPAF_N8N_API_KEY`.
-- Deploy by running `scripts/deploy.ps1` (or equivalent PUT via REST API), not via MCP `update_workflow` — the script handles credential ID injection that MCP does not perform automatically.
-- Default source file: `workflows/active/wp-social-publisher-approval-flow.json`, unless the user specifies a different workflow file.
-- First identify the remote workflow by canonical name, then update that workflow in place.
-- Exclude read-only fields from the request body.
-- After deploy, verify with a follow-up `GET` that the remote workflow reflects the expected changes.
-- Do not activate or deactivate the workflow unless the user explicitly requests it.
-- At the end, report the workflow ID, whether it was updated in place, and the verification result.
+Before implementing a new n8n node, resolve the exact node type and parameter names for the target instance.
 
+Primary method:
+1. Use MCP `search_nodes` to find the correct node.
+2. Note any returned discriminators such as `resource`, `operation`, `mode`, and `version`.
+3. Use MCP `get_node_types` with those values.
+4. Use only the parameter names returned by the tool.
 
-## n8n Node Type Resolution
+Fallback when MCP is unavailable:
+1. Scan existing workflows for the node type and `typeVersion` already in use.
+2. If still unresolved, consult official n8n documentation.
+3. If uncertainty remains, ask the user to confirm availability from the n8n UI before writing the node.
 
-Before implementing any node not yet present in the active workflow, always resolve the correct node type name and parameters for this specific server.
+Always preserve the correct `typeVersion` for the target instance.
 
-**Primary method — MCP server (preferred):**
+## Runtime and Configuration Discipline
 
-1. Call `search_nodes` with the service or node name (e.g. `"openai"`, `"wordpress"`, `"schedule trigger"`).
-2. Note the node ID and discriminators (`resource`, `operation`, `mode`) returned.
-3. Call `get_node_types` with the node ID and discriminators to get the exact TypeScript parameter definitions.
-4. Use only the parameter names returned — never guess or assume field names.
+- Distinguish between local development/tooling variables and workflow runtime variables.
+- Keep runtime values in environment variables or n8n Variables as defined by the project.
+- Keep secrets and authenticated integrations in n8n Credentials.
+- Document project-specific variable names in `AGENTS/PROJECT.md`, not here.
 
-The MCP server is connected via `.mcp.json` and available in every Claude Code session. The endpoints `/api/v1/node-types` and `/rest/node-types` are not available on this server — MCP is the only reliable programmatic source for node type definitions.
+## Workflow Code Standards
 
-**Fallback — scan existing workflows (when MCP is unavailable):**
+- Write code inside n8n `Code`, `Function`, or inline script nodes in JavaScript compatible with the n8n server runtime, unless the project explicitly documents another supported runtime.
+- Prefer simple, working node configurations over speculative complexity.
+- Reuse existing workflow patterns where possible to reduce drift.
 
-1. `GET /api/v1/workflows` + `GET /api/v1/workflows/{id}` for each — collect all `node.type` and `typeVersion` values already in use.
-2. If the node is not found, consult official n8n documentation and ask the user to confirm the node exists in their n8n UI before writing JSON.
+## Repository Scope
 
-**Always collect `typeVersion`** — use the version already in use on the server, not a version assumed from documentation.
-
-Apply this rule before every new node implementation, not only for AI/LLM nodes.
-
-
-## Coding Standards
-
-- All code written inside n8n workflow nodes (Code node, Function node, or any inline script block) must be written in **JavaScript** compatible with the n8n Code node runtime (server-side Node.js), not Python, unless the target n8n server is explicitly prepared with a working Python runner.
-- Apply this rule to every new node and to any node modified during implementation.
-
-
-## Excluded Directories
-Always ignore these folders for review/refactoring/fixes:
+Ignore generated or third-party directories unless the task explicitly requires them:
 - `vendor/`
 - `node_modules/`

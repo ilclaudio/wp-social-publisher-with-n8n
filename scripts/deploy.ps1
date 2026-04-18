@@ -10,12 +10,21 @@ if (-not $key)  { Write-Error "WSPAF_N8N_API_KEY not set";  exit 1 }
 
 $headers = @{ 'X-N8N-API-KEY' = $key; 'Content-Type' = 'application/json' }
 
-# --- 1. Resolve OpenAI credential ID ---
-Write-Host "[1] Resolving OpenAI credential ID..."
+# --- 1. Resolve credential IDs ---
+Write-Host "[1] Resolving credential IDs..."
 $credsResp = Invoke-RestMethod -Uri "$base/api/v1/credentials" -Headers $headers -Method Get
 $openAiCred = $credsResp.data | Where-Object { $_.name -eq 'OpenAI account' } | Select-Object -First 1
 if (-not $openAiCred) { Write-Error "Credential 'OpenAI account' not found on server"; exit 1 }
 Write-Host "  Found: id=$($openAiCred.id) name=$($openAiCred.name)"
+$smtpCred = $credsResp.data | Where-Object { $_.name -eq 'SMTP Account' } | Select-Object -First 1
+if (-not $smtpCred) { Write-Error "Credential 'SMTP Account' not found on server"; exit 1 }
+Write-Host "  Found: id=$($smtpCred.id) name=$($smtpCred.name)"
+$twitterCred = $credsResp.data | Where-Object { $_.name -eq 'X OAuth account' } | Select-Object -First 1
+if (-not $twitterCred) { Write-Error "Credential 'X OAuth account' not found on server"; exit 1 }
+Write-Host "  Found: id=$($twitterCred.id) name=$($twitterCred.name)"
+$twitterOAuth2Cred = $credsResp.data | Where-Object { $_.name -eq 'X OAuth2 account' } | Select-Object -First 1
+if (-not $twitterOAuth2Cred) { Write-Error "Credential 'X OAuth2 account' not found on server"; exit 1 }
+Write-Host "  Found: id=$($twitterOAuth2Cred.id) name=$($twitterOAuth2Cred.name)"
 
 # --- 2. Find remote workflow by name ---
 Write-Host "[2] Finding remote workflow..."
@@ -29,11 +38,30 @@ Write-Host "[3] Loading local workflow file..."
 $localJson = Get-Content -Path $WorkflowFile -Raw -Encoding UTF8
 $payload = $localJson | ConvertFrom-Json
 
-# Inject credential ID into the OpenAI node
+# Inject credential IDs
 $openAiNode = $payload.nodes | Where-Object { $_.id -eq 'generate-ai-message' }
 if (-not $openAiNode) { Write-Error "Node 'generate-ai-message' not found in local JSON"; exit 1 }
 $openAiNode.credentials.openAiApi.id = $openAiCred.id
-Write-Host "  Credential ID injected: $($openAiCred.id)"
+Write-Host "  OpenAI credential ID injected: $($openAiCred.id)"
+
+$smtpNode = $payload.nodes | Where-Object { $_.id -eq 'approval-gate-email' }
+if (-not $smtpNode) { Write-Error "Node 'approval-gate-email' not found in local JSON"; exit 1 }
+$smtpNode.credentials.smtp.id = $smtpCred.id
+Write-Host "  SMTP credential ID injected (approval gate): $($smtpCred.id)"
+
+foreach ($notifyId in @('notify-published-with-image', 'notify-published-no-image', 'notify-not-approved')) {
+    $notifyNode = $payload.nodes | Where-Object { $_.id -eq $notifyId }
+    if ($notifyNode) { $notifyNode.credentials.smtp.id = $smtpCred.id; Write-Host "  SMTP credential ID injected ($notifyId): $($smtpCred.id)" }
+}
+
+$uploadNode = $payload.nodes | Where-Object { $_.id -eq 'upload-media-twitter' }
+if ($uploadNode) { $uploadNode.credentials.twitterOAuth1Api.id = $twitterCred.id; Write-Host "  Twitter OAuth1 credential ID injected (upload): $($twitterCred.id)" }
+
+$tweetWithImageNode = $payload.nodes | Where-Object { $_.id -eq 'post-tweet-with-image' }
+if ($tweetWithImageNode) { $tweetWithImageNode.credentials.twitterOAuth2Api.id = $twitterOAuth2Cred.id; Write-Host "  Twitter OAuth2 credential ID injected (tweet with image): $($twitterOAuth2Cred.id)" }
+
+$tweetNode = $payload.nodes | Where-Object { $_.id -eq 'post-tweet' }
+if ($tweetNode) { $tweetNode.credentials.twitterOAuth2Api.id = $twitterOAuth2Cred.id; Write-Host "  Twitter OAuth2 credential ID injected (tweet): $($twitterOAuth2Cred.id)" }
 
 # Remove read-only fields
 $payload.PSObject.Properties.Remove('id')

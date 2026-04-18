@@ -22,10 +22,11 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 - Infrastructure constraints:
   - Project env vars must use the `WSPAF_` prefix.
   - Development environment vars: `WSPAF_N8N_BASE_URL`, `WSPAF_N8N_API_KEY`.
-  - n8n runtime environment vars: `WSPAF_WP_SITE_URL`, `WSPAF_APPROVAL_EMAIL`, `WSPAF_APPROVAL_NAME`.
+  - n8n runtime environment vars: `WSPAF_WP_SITE_URL`, `WSPAF_APPROVAL_EMAIL`, `WSPAF_APPROVAL_NAME`, `WSPAF_SENDER_EMAIL`.
   - WordPress base URL must come from environment variable `WSPAF_WP_SITE_URL`.
-  - Approval recipient email must come from environment variable `WSPAF_APPROVAL_EMAIL`.
-  - Approval recipient display name must come from environment variable `WSPAF_APPROVAL_NAME`.
+- Approval recipient email must come from environment variable `WSPAF_APPROVAL_EMAIL`.
+- Approval recipient display name must come from environment variable `WSPAF_APPROVAL_NAME`.
+- Approval sender email must come from environment variable `WSPAF_SENDER_EMAIL`.
   - Polling schedule: every hour.
   - Trigger strategy: dual trigger in n8n (`Schedule Trigger` + `Manual Trigger` for tests).
 - Security/compliance constraints:
@@ -48,7 +49,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 - Expected outputs: list of new posts to process or empty list.
 - Dependencies: WordPress API availability; n8n scheduler; n8n manual trigger; n8n Data Store.
 - Priority: MVP
-- Status: todo
+- Status: done
 - Acceptance criteria:
   1. Scheduler runs every hour and manual trigger can run on-demand for tests.
   2. Detection uses WordPress `date_gmt` as the primary new-post criterion.
@@ -67,7 +68,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 - Expected outputs: normalized object `{title/topic, excerpt/content, imageUrl, postUrl}`.
 - Dependencies: WordPress REST fields/media endpoints.
 - Priority: MVP
-- Status: todo
+- Status: done
 - Acceptance criteria:
   1. Post URL is always present.
   2. Featured image is resolved when available.
@@ -84,7 +85,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 - Expected outputs: channel-ready message text.
 - Dependencies: OpenAI credential in n8n.
 - Priority: MVP
-- Status: todo
+- Status: done
 - Acceptance criteria:
   1. Message length is <= 280 characters.
   2. Message includes `#n8n`.
@@ -97,11 +98,11 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 ### Feature 4 - Approval Email Workflow per Channel
 - Description: send approval request emails (Twitter/X, Telegram, Instagram, Facebook) to one recipient from environment variables.
 - User value: editorial control before publishing.
-- Expected inputs: generated message + post media/link + `WSPAF_APPROVAL_EMAIL` + `WSPAF_APPROVAL_NAME`.
+- Expected inputs: generated message + post media/link + `WSPAF_APPROVAL_EMAIL` + `WSPAF_APPROVAL_NAME` + `WSPAF_SENDER_EMAIL`.
 - Expected outputs: approval decision per channel (approve/reject).
 - Dependencies: authenticated SMTP credential in n8n.
 - Priority: MVP
-- Status: todo
+- Status: done
 - Acceptance criteria:
   1. One approval request is sent per channel.
   2. Recipient is read from environment variables.
@@ -118,7 +119,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 - Expected outputs: published post/tweet or skipped action.
 - Dependencies: Twitter/X credential in n8n.
 - Priority: MVP
-- Status: todo
+- Status: in-progress
 - Acceptance criteria:
   1. Approve => publishes once.
   2. Reject => skip with no publication.
@@ -215,7 +216,7 @@ Use both markers for each step:
 - Activities:
   1. Define and document env vars by scope:
      - development: `WSPAF_N8N_BASE_URL`, `WSPAF_N8N_API_KEY`
-     - n8n runtime environment: `WSPAF_WP_SITE_URL`, `WSPAF_APPROVAL_EMAIL`, `WSPAF_APPROVAL_NAME`
+     - n8n runtime environment: `WSPAF_WP_SITE_URL`, `WSPAF_APPROVAL_EMAIL`, `WSPAF_APPROVAL_NAME`, `WSPAF_SENDER_EMAIL`
   2. Configure n8n Credentials for WordPress, OpenAI, SMTP, and social platforms.
   3. Verify no secrets are present in repository and workflow JSON files.
 - Progress:
@@ -243,6 +244,8 @@ Use both markers for each step:
   - [x] Task 5 completed on 2026-04-13 (implemented `Extract URL and Featured Image` using WordPress `_embedded` featured media data and normalized payload fields)
   - [x] Task 6 completed on 2026-04-15 (implemented `Generate AI Message (max 280, #n8n)` using OpenAI node with `gpt-4o-mini` and `OpenAI account` credential; added `Validate AI Message` Code node to enforce 280-char limit and `#n8n` presence; credential `id` left empty in source JSON — resolved at deploy time via `GET /api/v1/credentials`)
   - [x] Task 7 completed on 2026-04-15 (added `Debug - AI message` Code node after `Validate AI Message`; logs `socialMessage` text, length, and validity per item; output visible in node Logs tab in n8n execution detail view)
+  - [x] Task 8 completed on 2026-04-18 (implemented `Approval Gate (Email)` using `n8n-nodes-base.emailSend` v2.1 with `sendAndWait` operation; sends HTML approval email from `$env.WSPAF_SENDER_EMAIL` to `$env.WSPAF_APPROVAL_EMAIL` with post title, URL, image link, and social message preview; approval type `double` with labels "Pubblica"/"Non pubblicare"; timeout 24h with automatic reject; credential `SMTP account` with empty `id`; added `Approved?` If node v2.3 branching on `$json.approved`; added `Skip - Not Approved` NoOp for rejected/timeout path)
+  - [x] Task 9 completed on 2026-04-19 (implemented Feature 5: added `Has Image? (Twitter)` If node, `Fetch Image Binary` HTTP Request, `Upload Media to Twitter` HTTP Request to `upload.twitter.com/1.1/media/upload.json` with OAuth1, `Post Tweet with Image` and `Post Tweet` HTTP Request nodes to `https://api.twitter.com/2/tweets` with JSON body; all Twitter nodes use `twitterOAuth1Api` / `X OAuth account`; native Twitter node avoided because its UI picker requires `twitterOAuth2Api`; v1.1 `statuses/update` deprecated — using v2 for tweet creation; routing fix: `Has Image?` reads `hasFeaturedImage` from `$('Validate AI Message').item.json` because `sendAndWait` replaces `$json` with approval data)
 - Definition of done: one approved WordPress post is published on Twitter/X.
 - Expected output: stable MVP workflow in n8n and JSON aligned to repository standards.
 - Status: in-progress
@@ -317,6 +320,7 @@ Use both markers for each step:
 Use these rules to keep this file as the single development track.
 
 - Every new development request must reference one Feature and one specific Step.
+- Feature status should be updated whenever a step materially changes delivery state.
 - Before starting any change, set the Step status to in-progress.
 - After implementation and testing, set the Step status to done.
 - If new scope appears, add it here before implementing it.

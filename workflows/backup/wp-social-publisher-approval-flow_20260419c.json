@@ -252,7 +252,7 @@
           "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
           "conditions": [
             {
-              "leftValue": "={{ $json.data.approved }}",
+              "leftValue": "={{ $json.approved }}",
               "rightValue": true,
               "operator": { "type": "boolean", "operation": "equals" }
             }
@@ -385,7 +385,7 @@
         "operation": "send",
         "fromEmail": "={{ $env.WSPAF_SENDER_EMAIL }}",
         "toEmail": "={{ $env.WSPAF_APPROVAL_EMAIL }}",
-        "subject": "={{ 'X pubblicato con immagine | Post #' + $('Validate AI Message').item.json.id + ' | ' + $('Validate AI Message').item.json.titleText }}",
+        "subject": "={{ '[Pubblicato con immagine] ' + $('Validate AI Message').item.json.titleText }}",
         "emailFormat": "html",
         "html": "=<p>Il post &egrave; stato approvato e pubblicato su X con immagine.</p><p><strong>Titolo:</strong> {{ $('Validate AI Message').item.json.titleText }}</p><p><strong>URL articolo:</strong> <a href=\"{{ $('Validate AI Message').item.json.postUrl }}\">{{ $('Validate AI Message').item.json.postUrl }}</a></p><p><strong>Messaggio pubblicato:</strong> {{ $('Validate AI Message').item.json.socialMessage }}</p>",
         "options": {}
@@ -407,7 +407,7 @@
         "operation": "send",
         "fromEmail": "={{ $env.WSPAF_SENDER_EMAIL }}",
         "toEmail": "={{ $env.WSPAF_APPROVAL_EMAIL }}",
-        "subject": "={{ 'X pubblicato senza immagine | Post #' + $('Validate AI Message').item.json.id + ' | ' + $('Validate AI Message').item.json.titleText }}",
+        "subject": "={{ '[Pubblicato] ' + $('Validate AI Message').item.json.titleText }}",
         "emailFormat": "html",
         "html": "=<p>Il post &egrave; stato approvato e pubblicato su X (senza immagine).</p><p><strong>Titolo:</strong> {{ $('Validate AI Message').item.json.titleText }}</p><p><strong>URL articolo:</strong> <a href=\"{{ $('Validate AI Message').item.json.postUrl }}\">{{ $('Validate AI Message').item.json.postUrl }}</a></p><p><strong>Messaggio pubblicato:</strong> {{ $('Validate AI Message').item.json.socialMessage }}</p>",
         "options": {}
@@ -429,7 +429,7 @@
         "operation": "send",
         "fromEmail": "={{ $env.WSPAF_SENDER_EMAIL }}",
         "toEmail": "={{ $env.WSPAF_APPROVAL_EMAIL }}",
-        "subject": "={{ 'X non pubblicato | Post #' + $('Validate AI Message').item.json.id + ' | ' + $('Validate AI Message').item.json.titleText }}",
+        "subject": "={{ '[Non pubblicato] ' + $('Validate AI Message').item.json.titleText }}",
         "emailFormat": "html",
         "html": "=<p>Il post non &egrave; stato pubblicato su X: approvazione rifiutata o scaduta (24h).</p><p><strong>Titolo:</strong> {{ $('Validate AI Message').item.json.titleText }}</p><p><strong>URL articolo:</strong> <a href=\"{{ $('Validate AI Message').item.json.postUrl }}\">{{ $('Validate AI Message').item.json.postUrl }}</a></p>",
         "options": {}

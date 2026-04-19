@@ -22,14 +22,15 @@
         "rule": {
           "interval": [
             {
-              "field": "hours",
-              "hoursInterval": 1
+              "field": "days",
+              "triggerAtHour": 6,
+              "triggerAtMinute": 0
             }
           ]
         }
       },
       "id": "schedule-trigger-hourly",
-      "name": "Schedule Trigger (Hourly)",
+      "name": "Schedule Trigger (Daily 06:00)",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [220, 420]
@@ -68,7 +69,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const LOOKBACK_MINUTES = 70;\nconst now = new Date();\nconst cutoffMs = now.getTime() - LOOKBACK_MINUTES * 60 * 1000;\n\nreturn items\n  .filter((item) => {\n    const post = item.json ?? {};\n    const dateGmt = post.date_gmt;\n\n    if (!dateGmt) {\n      return false;\n    }\n\n    const publishedMs = Date.parse(`${dateGmt}Z`);\n    return Number.isFinite(publishedMs) && publishedMs > cutoffMs;\n  })\n  .map((item) => ({\n    json: {\n      ...(item.json ?? {}),\n      detectedAtUtc: now.toISOString(),\n    },\n  }));"
+        "jsCode": "const LOOKBACK_MINUTES = 1500;\nconst now = new Date();\nconst cutoffMs = now.getTime() - LOOKBACK_MINUTES * 60 * 1000;\n\nreturn items\n  .filter((item) => {\n    const post = item.json ?? {};\n    const dateGmt = post.date_gmt;\n\n    if (!dateGmt) {\n      return false;\n    }\n\n    const publishedMs = Date.parse(`${dateGmt}Z`);\n    return Number.isFinite(publishedMs) && publishedMs > cutoffMs;\n  })\n  .map((item) => ({\n    json: {\n      ...(item.json ?? {}),\n      detectedAtUtc: now.toISOString(),\n    },\n  }));"
       },
       "id": "detect-new-posts",
       "name": "Detect New Posts (date_gmt)",
@@ -140,7 +141,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const TAG_RE = /<[^>]*>/g;\nconst WHITESPACE_RE = /\\s+/g;\nconst ENTITY_MAP = {\n  '&amp;': '&',\n  '&lt;': '<',\n  '&gt;': '>',\n  '&quot;': '\"',\n  '&#039;': \"'\",\n  '&nbsp;': ' ',\n};\n\nfunction decodeEntities(value) {\n  return value.replace(/&(amp|lt|gt|quot|#039|nbsp);/g, (entity) => ENTITY_MAP[entity] ?? entity);\n}\n\nfunction stripHtml(value) {\n  if (typeof value !== 'string' || !value) {\n    return '';\n  }\n\n  const text = decodeEntities(value.replace(TAG_RE, ' '));\n  return text.replace(WHITESPACE_RE, ' ').trim();\n}\n\nreturn items.map((item) => {\n  const post = item.json ?? {};\n  const embedded = post._embedded ?? {};\n  const mediaItems = Array.isArray(embedded['wp:featuredmedia']) ? embedded['wp:featuredmedia'] : [];\n  const featuredMedia = mediaItems[0] ?? {};\n  const titleRaw = post.title;\n  const excerptRaw = post.excerpt;\n  const title = stripHtml(typeof titleRaw === 'object' ? titleRaw?.rendered : titleRaw);\n  const excerpt = stripHtml(typeof excerptRaw === 'object' ? excerptRaw?.rendered : excerptRaw);\n  const imageUrl = typeof featuredMedia === 'object' ? featuredMedia.source_url ?? null : null;\n\n  return {\n    json: {\n      ...post,\n      titleText: title,\n      excerptText: excerpt,\n      topic: title,\n      content: excerpt,\n      postUrl: post.link,\n      imageUrl,\n      hasFeaturedImage: Boolean(imageUrl),\n    },\n  };\n});"
+        "jsCode": "const TAG_RE = /<[^>]*>/g;\nconst WHITESPACE_RE = /\\s+/g;\nconst ENTITY_MAP = {\n  '&amp;': '&',\n  '&lt;': '<',\n  '&gt;': '>',\n  '&quot;': '\"',\n  '&#039;': \"'\",\n  '&nbsp;': ' ',\n};\n\nfunction decodeEntities(value) {\n  return value\n    .replace(/&(amp|lt|gt|quot|#039|nbsp);/g, (entity) => ENTITY_MAP[entity] ?? entity)\n    .replace(/&#(\\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)));\n}\n\nfunction stripHtml(value) {\n  if (typeof value !== 'string' || !value) {\n    return '';\n  }\n\n  const text = decodeEntities(value.replace(TAG_RE, ' '));\n  return text.replace(WHITESPACE_RE, ' ').trim();\n}\n\nreturn items.map((item) => {\n  const post = item.json ?? {};\n  const embedded = post._embedded ?? {};\n  const mediaItems = Array.isArray(embedded['wp:featuredmedia']) ? embedded['wp:featuredmedia'] : [];\n  const featuredMedia = mediaItems[0] ?? {};\n  const titleRaw = post.title;\n  const excerptRaw = post.excerpt;\n  const title = stripHtml(typeof titleRaw === 'object' ? titleRaw?.rendered : titleRaw);\n  const excerpt = stripHtml(typeof excerptRaw === 'object' ? excerptRaw?.rendered : excerptRaw);\n  const imageUrl = typeof featuredMedia === 'object' ? featuredMedia.source_url ?? null : null;\n\n  return {\n    json: {\n      ...post,\n      titleText: title,\n      excerptText: excerpt,\n      topic: title,\n      content: excerpt,\n      postUrl: post.link,\n      imageUrl,\n      hasFeaturedImage: Boolean(imageUrl),\n    },\n  };\n});"
       },
       "id": "extract-post-payload",
       "name": "Extract URL and Featured Image",
@@ -248,20 +249,17 @@
     {
       "parameters": {
         "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
           "conditions": [
             {
-              "leftValue": "={{ $json.approved }}",
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              },
-              "rightValue": true
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
             }
-          ]
+          ],
+          "combinator": "and"
         },
-        "options": {
-          "looseTypeValidation": true
-        }
+        "options": {}
       },
       "id": "check-approval",
       "name": "Approved?",
@@ -270,12 +268,109 @@
       "position": [2840, 220]
     },
     {
-      "parameters": {},
-      "id": "publish-twitter-x",
-      "name": "Publish to Twitter/X",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{
+            "leftValue": "={{ $('Validate AI Message').item.json.hasFeaturedImage }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "true" }
+          }],
+          "combinator": "and"
+        }
+      },
+      "id": "has-image-twitter",
+      "name": "Has Image? (Twitter)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
       "position": [3100, 120]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Validate AI Message').item.json.imageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "fetch-image-binary",
+      "name": "Fetch Image Binary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3360, 20]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://upload.twitter.com/1.1/media/upload.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twitterOAuth1Api",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [{
+            "parameterType": "formBinaryData",
+            "name": "media",
+            "inputDataFieldName": "data"
+          }]
+        },
+        "options": {}
+      },
+      "id": "upload-media-twitter",
+      "name": "Upload Media to Twitter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3620, 20],
+      "credentials": {
+        "twitterOAuth1Api": {
+          "id": "",
+          "name": "X OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "tweet",
+        "operation": "create",
+        "text": "={{ $('Validate AI Message').item.json.socialMessage }}",
+        "additionalFields": {
+          "attachments": "={{ $json.media_id_string }}"
+        }
+      },
+      "id": "post-tweet-with-image",
+      "name": "Post Tweet with Image",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [3880, 20],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "",
+          "name": "X OAuth2 account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "tweet",
+        "operation": "create",
+        "text": "={{ $('Validate AI Message').item.json.socialMessage }}",
+        "additionalFields": {}
+      },
+      "id": "post-tweet",
+      "name": "Post Tweet",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [3360, 220],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "",
+          "name": "X OAuth2 account"
+        }
+      }
     },
     {
       "parameters": {},
@@ -284,6 +379,72 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [3100, 320]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "fromEmail": "={{ $env.WSPAF_SENDER_EMAIL }}",
+        "toEmail": "={{ $env.WSPAF_APPROVAL_EMAIL }}",
+        "subject": "={{ '[Pubblicato con immagine] ' + $('Validate AI Message').item.json.titleText }}",
+        "emailFormat": "html",
+        "html": "=<p>Il post &egrave; stato approvato e pubblicato su X con immagine.</p><p><strong>Titolo:</strong> {{ $('Validate AI Message').item.json.titleText }}</p><p><strong>URL articolo:</strong> <a href=\"{{ $('Validate AI Message').item.json.postUrl }}\">{{ $('Validate AI Message').item.json.postUrl }}</a></p><p><strong>Messaggio pubblicato:</strong> {{ $('Validate AI Message').item.json.socialMessage }}</p>",
+        "options": {}
+      },
+      "id": "notify-published-with-image",
+      "name": "Notify - Published with Image",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [4140, 20],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "fromEmail": "={{ $env.WSPAF_SENDER_EMAIL }}",
+        "toEmail": "={{ $env.WSPAF_APPROVAL_EMAIL }}",
+        "subject": "={{ '[Pubblicato] ' + $('Validate AI Message').item.json.titleText }}",
+        "emailFormat": "html",
+        "html": "=<p>Il post &egrave; stato approvato e pubblicato su X (senza immagine).</p><p><strong>Titolo:</strong> {{ $('Validate AI Message').item.json.titleText }}</p><p><strong>URL articolo:</strong> <a href=\"{{ $('Validate AI Message').item.json.postUrl }}\">{{ $('Validate AI Message').item.json.postUrl }}</a></p><p><strong>Messaggio pubblicato:</strong> {{ $('Validate AI Message').item.json.socialMessage }}</p>",
+        "options": {}
+      },
+      "id": "notify-published-no-image",
+      "name": "Notify - Published without Image",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [3620, 220],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "fromEmail": "={{ $env.WSPAF_SENDER_EMAIL }}",
+        "toEmail": "={{ $env.WSPAF_APPROVAL_EMAIL }}",
+        "subject": "={{ '[Non pubblicato] ' + $('Validate AI Message').item.json.titleText }}",
+        "emailFormat": "html",
+        "html": "=<p>Il post non &egrave; stato pubblicato su X: approvazione rifiutata o scaduta (24h).</p><p><strong>Titolo:</strong> {{ $('Validate AI Message').item.json.titleText }}</p><p><strong>URL articolo:</strong> <a href=\"{{ $('Validate AI Message').item.json.postUrl }}\">{{ $('Validate AI Message').item.json.postUrl }}</a></p>",
+        "options": {}
+      },
+      "id": "notify-not-approved",
+      "name": "Notify - Not Approved",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [3360, 320],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "SMTP Account"
+        }
+      }
     }
   ],
   "connections": {
@@ -293,7 +454,7 @@
     "Manual Trigger (Clear Dedupe History)": {
       "main": [[{ "node": "Clear Dedupe History", "type": "main", "index": 0 }]]
     },
-    "Schedule Trigger (Hourly)": {
+    "Schedule Trigger (Daily 06:00)": {
       "main": [[{ "node": "Fetch WP Posts", "type": "main", "index": 0 }]]
     },
     "Fetch WP Posts": {
@@ -331,9 +492,30 @@
     },
     "Approved?": {
       "main": [
-        [{ "node": "Publish to Twitter/X", "type": "main", "index": 0 }],
+        [{ "node": "Has Image? (Twitter)", "type": "main", "index": 0 }],
         [{ "node": "Skip - Not Approved", "type": "main", "index": 0 }]
       ]
+    },
+    "Has Image? (Twitter)": {
+      "main": [
+        [{ "node": "Fetch Image Binary", "type": "main", "index": 0 }],
+        [{ "node": "Post Tweet", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Image Binary": {
+      "main": [[{ "node": "Upload Media to Twitter", "type": "main", "index": 0 }]]
+    },
+    "Upload Media to Twitter": {
+      "main": [[{ "node": "Post Tweet with Image", "type": "main", "index": 0 }]]
+    },
+    "Post Tweet with Image": {
+      "main": [[{ "node": "Notify - Published with Image", "type": "main", "index": 0 }]]
+    },
+    "Post Tweet": {
+      "main": [[{ "node": "Notify - Published without Image", "type": "main", "index": 0 }]]
+    },
+    "Skip - Not Approved": {
+      "main": [[{ "node": "Notify - Not Approved", "type": "main", "index": 0 }]]
     }
   },
   "settings": {

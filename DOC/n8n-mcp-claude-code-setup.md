@@ -4,7 +4,7 @@
 
 Questo documento descrive come configurare il server MCP di n8n per l'uso con Claude Code in VSCode, nel contesto del progetto **WP Social Publisher Approval Flow**. Una volta configurato, Claude Code può leggere, creare, modificare, testare ed eseguire workflow n8n direttamente dalla chat, senza aprire l'interfaccia web di n8n.
 
-Il server n8n di questo progetto è raggiungibile su `n8n.claudiobattaglino.it`.
+Il server n8n di questo progetto è raggiungibile su `n8n.miosito.org`.
 
 ---
 
@@ -54,7 +54,7 @@ Ci sono tre modalità alternative: sceglierne una è sufficiente, non è necessa
   "mcpServers": {
     "n8n-mcp": {
       "type": "http",
-      "url": "https://n8n.claudiobattaglino.it/mcp-server/http",
+      "url": "https://n8n.miosito.org/mcp-server/http",
       "headers": {
         "Authorization": "Bearer <token-jwt-dal-passo-2>"
       }
@@ -70,7 +70,7 @@ Il file `.mcp.json` è già escluso dal `.gitignore` di questo progetto — non 
 Esegui questo comando dal terminale, **fuori da una sessione Claude Code attiva**. Il comando va eseguito una sola volta e persiste dopo il riavvio di VSCode.
 
 ```powershell
-claude mcp add --scope user n8n-mcp --transport http "https://n8n.claudiobattaglino.it/mcp-server/http" --header "Authorization: Bearer <token-jwt-dal-passo-2>"
+claude mcp add --scope user n8n-mcp --transport http "https://n8n.miosito.org/mcp-server/http" --header "Authorization: Bearer <token-jwt-dal-passo-2>"
 ```
 
 > Note sulla configurazione utente:

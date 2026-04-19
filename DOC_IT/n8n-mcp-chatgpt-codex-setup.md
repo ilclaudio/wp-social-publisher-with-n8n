@@ -70,7 +70,7 @@ http_headers = { "authorization" = "Bearer <token-jwt-generato-al-passo-2>" }
 
 Se preferisci non inserire il token in chiaro nel file locale, puoi valutare una variante basata su variabile d'ambiente solo se il client Codex in uso la supporta esplicitamente nella tua versione. La configurazione sopra e quella confermata nella documentazione n8n per Codex CLI.
 
-Un template pronto è disponibile in [DOC/config.example.toml](./config.example.toml).
+Un template pronto è disponibile in [config/config.example.toml](../config/config.example.toml).
 
 ### 4. Verificare che il progetto sia trusted
 

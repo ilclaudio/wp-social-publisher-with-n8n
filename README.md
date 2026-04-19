@@ -36,7 +36,7 @@ scripts/
   deploy.ps1  # deploys the active workflow to n8n via REST API
 AGENTS/       # instructions and context for AI assistants
 DOC/          # English setup guides and technical notes
-DOC_IT/       # Italian setup guides, notes, and drafted articles
+DOC_IT/       # Italian setup guides and technical notes
 config/       # local config templates and project support files
 assets/       # images and screenshots
 ```

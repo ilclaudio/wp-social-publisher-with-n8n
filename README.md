@@ -152,7 +152,7 @@ To test individual nodes after the approval gate (which uses `sendAndWait` and c
 | `Schedule Trigger (Daily 06:00)` | Trigger | Starts the workflow automatically once per day at 06:00. |
 | `Fetch WP Posts` | HTTP Request | Calls the WordPress REST API (`$env.WSPAF_WP_SITE_URL`) and fetches the 20 most recent published posts, including `_embedded` data for featured media. Both triggers connect directly to this node. |
 | `Debug - Count fetched posts` | Code | Logs the number of posts returned and a short preview of the first items. |
-| `Detect New Posts (date_gmt)` | Code | Keeps only posts published within the last 1500 minutes (25 hours) based on `date_gmt`. Adds `detectedAtUtc` to each item. |
+| `Detect New Posts (date_gmt)` | Code | Keeps only posts published within the last 1500 minutes (25 hours) based on `date_gmt`. Adds `detectedAtUtc` to each item. If more than one post matches, the workflow continues with multiple items and the downstream path is executed once for each post. |
 | `Deduplicate via Data Store` | Remove Duplicates | Skips posts whose WordPress `id` was already seen in a previous execution (workflow-scope persistent history, up to 10 000 entries). |
 | `Debug - Deduplicate summary` | Code | Logs how many posts were detected, kept, and skipped as duplicates. |
 | `Extract URL and Featured Image` | Code | Normalises each post into clean fields: `titleText`, `excerptText`, `postUrl`, `imageUrl`, `hasFeaturedImage`. Strips HTML tags and decodes entities (including numeric ones like `&#8211;`) from title and excerpt. |

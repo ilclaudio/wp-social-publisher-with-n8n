@@ -126,6 +126,21 @@ When pulling workflows from the server:
 2. Preserve repository naming conventions.
 3. Treat the pull as a snapshot activity for Git history.
 
+## Documentation Alignment Rule
+
+When workflow behavior, structure, setup, deploy procedure, runtime variables, credentials usage, or development methodology changes, update the related documentation as needed in the same work cycle.
+
+Check and align, when relevant:
+- files inside `AGENTS/`
+- `README.md`
+- documents inside `DOC/`
+
+If an Italian translation exists for the same content, keep it aligned as well:
+- `README_IT.md`
+- documents inside `DOC_IT/`
+
+Do not assume workflow JSON changes are self-documenting: if the change affects how the project is understood, operated, developed, or deployed, update the corresponding docs.
+
 ## Implementation Focus
 
 Use `AGENTS/IMPLEMENTATION_TRACK.md` as the source of truth for:

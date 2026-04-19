@@ -1,52 +1,52 @@
-# Configurazione MCP Server n8n con Claude Code in VSCode
+# n8n MCP Server Setup with Claude Code in VSCode
 
-## Panoramica
+## Overview
 
-Questo documento descrive come configurare il server MCP di n8n per l'uso con Claude Code in VSCode, nel contesto del progetto **WP Social Publisher Approval Flow**. Una volta configurato, Claude Code può leggere, creare, modificare, testare ed eseguire workflow n8n direttamente dalla chat, senza aprire l'interfaccia web di n8n.
+This document describes how to configure n8n's MCP server for use with Claude Code in VSCode, in the context of the **WP Social Publisher Approval Flow** project. Once configured, Claude Code can read, create, modify, test, and execute n8n workflows directly from the chat, without opening the n8n web interface.
 
-Il server n8n di questo progetto è raggiungibile su `n8n.miosito.org`.
+The n8n server for this project is reachable at `n8n.miosito.org`.
 
 ---
 
-## Concetto chiave: due ruoli dell'MCP in n8n
+## Key concept: two roles of MCP in n8n
 
-n8n può usare MCP in due modi distinti:
+n8n can use MCP in two distinct ways:
 
-| Ruolo | Descrizione |
+| Role | Description |
 |---|---|
-| **n8n come MCP server** | n8n espone i propri workflow come tool per AI client esterni |
-| **Claude Code gestisce n8n via MCP** | Claude Code si connette all'endpoint MCP di n8n per gestire i workflow |
+| **n8n as an MCP server** | n8n exposes its workflows as tools for external AI clients |
+| **Claude Code manages n8n via MCP** | Claude Code connects to n8n's MCP endpoint to manage workflows |
 
-Questo documento riguarda il **secondo ruolo**. Il toggle "Available in MCP" visibile nella UI di n8n non è necessario per questo scopo: serve solo per esporre workflow come tool eseguibili da client AI esterni.
+This document is about the **second role**. The "Available in MCP" toggle visible in the n8n UI is not required for this purpose: it is only used to expose workflows as executable tools for external AI clients.
 
 ---
 
-## Passi di configurazione
+## Setup steps
 
-### 1. Abilitare la Public API di n8n
+### 1. Enable the n8n Public API
 
-1. Accedi all'interfaccia web di n8n → **Settings → API**.
-2. Abilita la Public API e genera una API key.
+1. Open the n8n web interface → **Settings → API**.
+2. Enable the Public API and generate an API key.
 
-Questa chiave corrisponde alla variabile `WSPAF_N8N_API_KEY` usata dagli script REST locali — è distinta dal token MCP.
+This key corresponds to the `WSPAF_N8N_API_KEY` variable used by local REST scripts — it is separate from the MCP token.
 
-### 2. Abilitare l'Instance-level MCP e generare il token
+### 2. Enable Instance-level MCP and generate the token
 
-1. Vai in **Settings → MCP**.
-2. Attiva la funzionalità.
-3. Genera un **MCP API token** (formato JWT con `"aud": "mcp-server-api"`).
-4. Copia il token — servirà nel passo successivo.
+1. Go to **Settings → MCP**.
+2. Enable the feature.
+3. Generate an **MCP API token** (JWT format with `"aud": "mcp-server-api"`).
+4. Copy the token — it will be needed in the next step.
 
-### 3. Configurare il server MCP in Claude Code
+### 3. Configure the MCP server in Claude Code
 
-Ci sono due modalità alternative: sceglierne una è sufficiente, non è necessario combinarle.
+There are two alternative modes: choosing one is enough, there is no need to combine them.
 
-| Scope | Metodo | Disponibile in |
+| Scope | Method | Available in |
 |---|---|---|
-| **Progetto** | File `.mcp.json` nella root del repository | Solo quel progetto |
-| **Utente (globale)** | Comando CLI `claude mcp add --scope user` (salvato in `~/.claude.json`) | Tutti i progetti |
+| **Project** | `.mcp.json` file in the repository root | Only that project |
+| **User (global)** | CLI command `claude mcp add --scope user` (saved in `~/.claude.json`) | All projects |
 
-**Opzione A — Progetto (`.mcp.json`):**
+**Option A — Project (`.mcp.json`):**
 
 ```json
 {
@@ -55,63 +55,63 @@ Ci sono due modalità alternative: sceglierne una è sufficiente, non è necessa
       "type": "http",
       "url": "https://n8n.miosito.org/mcp-server/http",
       "headers": {
-        "Authorization": "Bearer <token-jwt-dal-passo-2>"
+        "Authorization": "Bearer <jwt-token-from-step-2>"
       }
     }
   }
 }
 ```
 
-Il file `.mcp.json` è già escluso dal `.gitignore` di questo progetto — non va mai committato.
+The `.mcp.json` file is already excluded by this project's `.gitignore` — it must never be committed.
 
-**Opzione B — Utente globale (valido per tutti i progetti):**
+**Option B — Global user config (valid for all projects):**
 
-Esegui questo comando dal terminale, **fuori da una sessione Claude Code attiva**. Il comando va eseguito una sola volta e persiste dopo il riavvio di VSCode.
+Run this command from the terminal, **outside an active Claude Code session**. The command only needs to be run once and persists after restarting VSCode.
 
 ```powershell
-claude mcp add --scope user n8n-mcp --transport http "https://n8n.miosito.org/mcp-server/http" --header "Authorization: Bearer <token-jwt-dal-passo-2>"
+claude mcp add --scope user n8n-mcp --transport http "https://n8n.miosito.org/mcp-server/http" --header "Authorization: Bearer <jwt-token-from-step-2>"
 ```
 
-> Note sulla configurazione utente:
-> - `C:\Users\<utente>\.claude\settings.json` **non supporta** il campo `mcpServers`.
-> - `C:\Users\<utente>\.claude.json` contiene la config MCP a scope locale e utente (non è solo per le credenziali di autenticazione).
-> - Il file `.mcp.json` **non viene letto** dalla home di Windows: funziona solo nella root del progetto.
+> Notes on user configuration:
+> - `C:\Users\<user>\.claude\settings.json` **does not support** the `mcpServers` field.
+> - `C:\Users\<user>\.claude.json` contains MCP config at local and user scope (it is not only for authentication credentials).
+> - The `.mcp.json` file **is not read** from the Windows home directory: it works only in the project root.
 
-### 4. Verificare la connessione
+### 4. Verify the connection
 
-1. Apri il progetto in VSCode con l'estensione Claude Code attiva.
-2. Avvia una sessione Claude Code.
-3. Chiedi a Claude di cercare i workflow esistenti — se la connessione funziona, riceverai l'elenco dei workflow presenti su n8n.
+1. Open the project in VSCode with the Claude Code extension enabled.
+2. Start a Claude Code session.
+3. Ask Claude to search existing workflows — if the connection works, you will receive the list of workflows available in n8n.
 
 ---
 
-## Operazioni disponibili con il server MCP configurato
+## Operations available with the configured MCP server
 
-| Operazione | Tool MCP |
+| Operation | MCP tool |
 |---|---|
-| Cercare/elencare workflow | `search_workflows` |
-| Leggere il dettaglio di un workflow | `get_workflow_details` |
-| Creare un nuovo workflow da codice SDK | `create_workflow_from_code` |
-| Aggiornare un workflow esistente | `update_workflow` |
-| Archiviare un workflow | `archive_workflow` |
-| Attivare / disattivare un workflow | `publish_workflow` / `unpublish_workflow` |
-| Eseguire un workflow | `execute_workflow` |
-| Testare un workflow | `test_workflow` |
-| Leggere il risultato di un'esecuzione | `get_execution` |
-| Validare il codice prima del deploy | `validate_workflow` |
-| Cercare nodi disponibili su n8n | `search_nodes` |
-| Ottenere le definizioni TypeScript dei nodi | `get_node_types` |
-| Leggere la documentazione dell'SDK n8n | `get_sdk_reference` |
+| Search/list workflows | `search_workflows` |
+| Read workflow details | `get_workflow_details` |
+| Create a new workflow from SDK code | `create_workflow_from_code` |
+| Update an existing workflow | `update_workflow` |
+| Archive a workflow | `archive_workflow` |
+| Activate / deactivate a workflow | `publish_workflow` / `unpublish_workflow` |
+| Execute a workflow | `execute_workflow` |
+| Test a workflow | `test_workflow` |
+| Read the result of an execution | `get_execution` |
+| Validate code before deploy | `validate_workflow` |
+| Search available nodes in n8n | `search_nodes` |
+| Get TypeScript definitions for nodes | `get_node_types` |
+| Read the n8n SDK documentation | `get_sdk_reference` |
 
 ---
 
-## Credenziali del progetto
+## Project credentials
 
-Il progetto usa due credenziali distinte che non interferiscono tra loro:
+The project uses two distinct credentials that do not interfere with each other:
 
-| Credenziale | Dove si configura | Scopo |
+| Credential | Where it is configured | Purpose |
 |---|---|---|
-| `WSPAF_N8N_API_KEY` | Variabile d'ambiente a livello macchina (`setx ... /M`) | Script di deploy e chiamate REST |
-| JWT Bearer MCP | `.mcp.json` o config utente Claude Code | Connessione Claude Code ↔ n8n |
+| `WSPAF_N8N_API_KEY` | Machine-level environment variable (`setx ... /M`) | Deploy scripts and REST calls |
+| MCP JWT Bearer | `.mcp.json` or Claude Code user config | Claude Code ↔ n8n connection |
 
-Entrambi i file che contengono questi valori (`.env` e `.mcp.json`) sono esclusi dal `.gitignore`. Se il token MCP viene compromesso, rigeneralo da **Settings → MCP** su n8n e aggiorna la configurazione locale.
+Both files containing these values (`.env` and `.mcp.json`) are excluded by `.gitignore`. If the MCP token is compromised, regenerate it from **Settings → MCP** in n8n and update the local configuration.

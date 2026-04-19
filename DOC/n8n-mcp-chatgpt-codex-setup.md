@@ -1,153 +1,153 @@
-# Configurazione MCP Server n8n con Codex
+# n8n MCP Server Setup with Codex
 
-## Panoramica
+## Overview
 
-Questo documento descrive come abilitare il server MCP integrato di n8n e configurarlo per l'uso con Codex. Una volta configurato, Codex può interagire con gli strumenti MCP esposti da n8n direttamente dalla sessione, senza aprire l'interfaccia web per ogni operazione.
+This document describes how to enable n8n's built-in MCP server and configure it for use with Codex. Once configured, Codex can interact with the MCP tools exposed by n8n directly from the session, without opening the web interface for every operation.
 
 ---
 
-## Concetti chiave
+## Key concepts
 
-### Due ruoli distinti dell'MCP in n8n
+### Two distinct roles of MCP in n8n
 
-| Ruolo | Descrizione |
+| Role | Description |
 |---|---|
-| **n8n come MCP server** | n8n espone i propri workflow come strumenti per AI client esterni (Codex, Claude, Lovable, ecc.) |
-| **Codex gestisce n8n via MCP** | Codex si connette all'endpoint MCP di n8n per leggere/creare/modificare workflow (quello che usiamo in questo progetto) |
+| **n8n as an MCP server** | n8n exposes its workflows as tools for external AI clients (Codex, Claude, Lovable, etc.) |
+| **Codex manages n8n via MCP** | Codex connects to n8n's MCP endpoint to read/create/modify workflows (what we use in this project) |
 
-Questo documento riguarda il **secondo ruolo**.
+This document is about the **second role**.
 
-### Toggle "Available in MCP" (UI di n8n)
+### "Available in MCP" toggle (n8n UI)
 
-Il toggle visibile nella pagina *Instance-level MCP* di n8n (e nei dettagli di ogni workflow) **serve quando vuoi esporre un workflow ai client MCP**, incluso Codex quando deve vedere o usare quel workflow tramite l'Instance-level MCP di n8n.
+The toggle visible on n8n's *Instance-level MCP* page (and in each workflow's details) **is used when you want to expose a workflow to MCP clients**, including Codex when it needs to see or use that workflow through n8n's Instance-level MCP.
 
-In base alla documentazione n8n attuale:
-- il workflow deve essere pubblicato
-- deve avere un trigger supportato
-- deve essere esplicitamente reso disponibile in MCP
+According to the current n8n documentation:
+- the workflow must be published
+- it must have a supported trigger
+- it must be explicitly made available in MCP
 
-Nel contesto di questo progetto, questo toggle e rilevante soprattutto per i workflow che vuoi rendere visibili o invocabili via MCP sul server n8n.
+In the context of this project, this toggle is mainly relevant for workflows that you want to make visible or invokable via MCP on the n8n server.
 
 ---
 
-## Passi di configurazione
+## Setup steps
 
-### 1. Abilitare l'Instance-level MCP su n8n
+### 1. Enable Instance-level MCP on n8n
 
-1. Vai in **Settings → MCP** (o cerca "Instance-level MCP" nel menu Settings).
-2. Attiva la funzionalità.
-3. Genera o copia un **MCP Access Token** dalla schermata di connessione MCP. Questo token è specifico per l'endpoint MCP e distinto dalla API key REST.
-4. Copia il token generato — verrà usato nel passo successivo.
+1. Go to **Settings → MCP** (or search for "Instance-level MCP" in the Settings menu).
+2. Enable the feature.
+3. Generate or copy an **MCP Access Token** from the MCP connection screen. This token is specific to the MCP endpoint and separate from the REST API key.
+4. Copy the generated token — it will be used in the next step.
 
-> Trattalo come un bearer token dell'endpoint MCP. Non fare affidamento su dettagli interni del formato del token come parte della configurazione.
+> Treat it as a bearer token for the MCP endpoint. Do not rely on internal details of the token format as part of the configuration.
 
-### 2. Scegliere il file di configurazione corretto
+### 2. Choose the correct configuration file
 
-Per questo progetto, Codex legge i server MCP dal file utente dell'ambiente in cui sta realmente girando. La configurazione non va nel repository.
+For this project, Codex reads MCP servers from the user file of the environment where it is actually running. The configuration does not belong in the repository.
 
-| Dove gira Codex | File da usare |
+| Where Codex runs | File to use |
 |---|---|
 | **WSL/Linux** | `~/.codex/config.toml` |
-| **Windows nativo** | `C:\Users\<utente>\.codex\config.toml` |
+| **Windows native** | `C:\Users\<user>\.codex\config.toml` |
 
-Regola pratica:
-- se apri VS Code in modalita WSL, usa la home di WSL
-- se usi Codex lato Windows, usa la home utente di Windows
+Rule of thumb:
+- if you open VS Code in WSL mode, use the WSL home directory
+- if you use Codex on the Windows side, use the Windows user home
 
-### 3. Aggiungere il server MCP di n8n
+### 3. Add the n8n MCP server
 
-Nel `config.toml` dell'ambiente scelto aggiungi una sezione come una delle seguenti.
+In the `config.toml` of the chosen environment, add a section like one of the following.
 
-**Configurazione documentata da n8n per Codex CLI:**
+**Configuration documented by n8n for Codex CLI:**
 
 ```toml
 [mcp_servers.n8n_mcp]
-url = "https://<tuo-dominio-n8n>/mcp-server/http"
-http_headers = { "authorization" = "Bearer <token-jwt-generato-al-passo-2>" }
+url = "https://<your-n8n-domain>/mcp-server/http"
+http_headers = { "authorization" = "Bearer <jwt-token-generated-in-step-2>" }
 ```
 
-> **Attenzione alla sintassi:** usa `http_headers` (non `headers`), preferisci il nome server `n8n_mcp`, e non aggiungere `type = "http"` — Codex lo inferisce dall'URL.
+> **Syntax warning:** use `http_headers` (not `headers`), prefer the server name `n8n_mcp`, and do not add `type = "http"` — Codex infers it from the URL.
 
-Se preferisci non inserire il token in chiaro nel file locale, puoi valutare una variante basata su variabile d'ambiente solo se il client Codex in uso la supporta esplicitamente nella tua versione. La configurazione sopra e quella confermata nella documentazione n8n per Codex CLI.
+If you prefer not to place the token in clear text in the local file, you can consider an environment-variable-based variant only if the Codex client you are using explicitly supports it in your version. The configuration above is the one confirmed in the n8n documentation for Codex CLI.
 
-Un template pronto è disponibile in [DOC/config.example.toml](./config.example.toml).
+A ready-to-use template is available in [DOC/config.example.toml](./config.example.toml).
 
-### 4. Verificare che il progetto sia trusted
+### 4. Verify that the project is trusted
 
-Nel `config.toml` dell'ambiente corrente aggiungi anche questo progetto come trusted.
+In the `config.toml` of the current environment, also add this project as trusted.
 
-- Se Codex gira in **WSL/Linux**, usa il path `/mnt/c/...`.
-- Se Codex gira in **Windows nativo**, usa il path `C:\...`.
-- Se apri lo stesso repo da percorsi diversi, puoi marcare come trusted piu di un path.
+- If Codex runs in **WSL/Linux**, use the `/mnt/c/...` path.
+- If Codex runs in **Windows native**, use the `C:\...` path.
+- If you open the same repo from different paths, you can mark more than one path as trusted.
 
-Nel contesto di questo progetto, quando Codex gira in WSL, una configurazione funzionante e per esempio:
+In the context of this project, when Codex runs in WSL, a working configuration is for example:
 
 ```toml
 [projects."/mnt/c/spaziodati/googledrivelavoro/progetti/pr-automazioni con n8n/wp-social-publisher-with-n8n"]
 trust_level = "trusted"
 ```
 
-Per evitare errori, usa esattamente il valore di `cwd` o l'output di `pwd` della sessione Codex corrente.
+To avoid errors, use exactly the value of `cwd` or the output of `pwd` from the current Codex session.
 
-### 5. Riavviare Codex e verificare la connessione
+### 5. Restart Codex and verify the connection
 
-1. Riavvia Codex o ricarica la sessione.
-2. Chiedi a Codex di cercare i workflow esistenti. Se la connessione funziona, riceverai l'elenco dei workflow presenti sul server n8n.
+1. Restart Codex or reload the session.
+2. Ask Codex to search for existing workflows. If the connection works, you will receive the list of workflows available on the n8n server.
 
-Se modifichi `config.toml` mentre Codex e gia aperto, il nuovo server MCP in genere non viene caricato nella sessione corrente: serve una nuova sessione o un riavvio dell'estensione/app.
+If you edit `config.toml` while Codex is already open, the new MCP server usually is not loaded into the current session: a new session or extension/app restart is required.
 
-### 6. Nota sulla REST API del progetto
+### 6. Note on the project's REST API
 
-Questo progetto usa anche la Public API REST di n8n per script locali di deploy e verifica, tramite `WSPAF_N8N_API_KEY`. Questa API key e separata dal token MCP e non serve per configurare Codex via MCP.
+This project also uses n8n's Public REST API for local deploy and verification scripts, through `WSPAF_N8N_API_KEY`. This API key is separate from the MCP token and is not needed to configure Codex via MCP.
 
 ---
 
-## Cosa puoi fare con il server MCP configurato
+## What you can do with the configured MCP server
 
-| Operazione | Tool MCP |
+| Operation | MCP tool |
 |---|---|
-| Cercare/elencare workflow | `search_workflows` |
-| Leggere il dettaglio di un workflow | `get_workflow_details` |
-| Creare un nuovo workflow da codice SDK | `create_workflow_from_code` |
-| Aggiornare un workflow esistente | `update_workflow` |
-| Archiviare un workflow | `archive_workflow` |
-| Attivare / disattivare un workflow | `publish_workflow` / `unpublish_workflow` |
-| Eseguire un workflow | `execute_workflow` |
-| Testare un workflow | `test_workflow` |
-| Leggere il risultato di un'esecuzione | `get_execution` |
-| Validare il codice prima del deploy | `validate_workflow` |
-| Cercare nodi disponibili su n8n | `search_nodes` |
-| Ottenere le definizioni TypeScript dei nodi | `get_node_types` |
-| Leggere la documentazione dell'SDK n8n | `get_sdk_reference` |
+| Search/list workflows | `search_workflows` |
+| Read workflow details | `get_workflow_details` |
+| Create a new workflow from SDK code | `create_workflow_from_code` |
+| Update an existing workflow | `update_workflow` |
+| Archive a workflow | `archive_workflow` |
+| Activate / deactivate a workflow | `publish_workflow` / `unpublish_workflow` |
+| Execute a workflow | `execute_workflow` |
+| Test a workflow | `test_workflow` |
+| Read the result of an execution | `get_execution` |
+| Validate code before deploy | `validate_workflow` |
+| Search available nodes in n8n | `search_nodes` |
+| Get TypeScript definitions for nodes | `get_node_types` |
+| Read the n8n SDK documentation | `get_sdk_reference` |
 
 ---
 
-## Credenziali in gioco: nessun conflitto
+## Credentials involved: no conflict
 
-Il progetto usa due credenziali distinte per scopi diversi:
+The project uses two separate credentials for different purposes:
 
-| Credenziale | Dove si configura | Endpoint target | Scopo |
+| Credential | Where it is configured | Target endpoint | Purpose |
 |---|---|---|---|
-| `WSPAF_N8N_API_KEY` | Variabile d'ambiente locale della macchina/sessione | REST API `/api/v1/...` | Script di deploy, chiamate REST manuali |
-| JWT Bearer (`config.toml`) | File locale utente dell'ambiente corrente | MCP endpoint `/mcp-server/http` | Connessione Codex ↔ n8n |
+| `WSPAF_N8N_API_KEY` | Local environment variable of the machine/session | REST API `/api/v1/...` | Deploy scripts, manual REST calls |
+| JWT Bearer (`config.toml`) | Local user file of the current environment | MCP endpoint `/mcp-server/http` | Codex ↔ n8n connection |
 
-Le due credenziali non interferiscono tra loro.
-
----
-
-## Note di sicurezza
-
-- **Non committare mai il tuo `config.toml` utente** con il token JWT — è un file locale dell'ambiente corrente.
-- **Non committare mai file locali con credenziali REST o MCP** — il progetto usa variabili d'ambiente locali e file utente come `config.toml`.
-- **Non committare mai token reali nei file template in `DOC/`** — usa solo placeholder.
-- **Non copiare nei documenti di progetto il contenuto reale di `http_headers.authorization`** dal tuo file utente.
-- Se il token MCP viene compromesso, rigeneralo dalla pagina *Settings → MCP* di n8n e aggiorna il file locale dell'ambiente in uso.
+The two credentials do not interfere with each other.
 
 ---
 
-## Riferimenti
+## Security notes
 
-- Documentazione n8n MCP: [docs.n8n.io](https://docs.n8n.io)
-- Docs MCP per Codex/OpenAI: [developers.openai.com/learn/docs-mcp](https://developers.openai.com/learn/docs-mcp)
-- Guida n8n per collegare Codex CLI: [docs.n8n.io/advanced-ai/accessing-n8n-mcp-server/](https://docs.n8n.io/advanced-ai/accessing-n8n-mcp-server/)
-- Panoramica OpenAI su Codex: [help.openai.com/en/articles/11369540-codex-in-chatgpt](https://help.openai.com/en/articles/11369540-codex-in-chatgpt)
+- **Never commit your user `config.toml`** with the JWT token — it is a local file of the current environment.
+- **Never commit local files containing REST or MCP credentials** — the project uses local environment variables and user files such as `config.toml`.
+- **Never commit real tokens in template files under `DOC/`** — use placeholders only.
+- **Do not copy the real content of `http_headers.authorization`** from your user file into project documents.
+- If the MCP token is compromised, regenerate it from the n8n *Settings → MCP* page and update the local file of the environment in use.
+
+---
+
+## References
+
+- n8n MCP documentation: [docs.n8n.io](https://docs.n8n.io)
+- MCP docs for Codex/OpenAI: [developers.openai.com/learn/docs-mcp](https://developers.openai.com/learn/docs-mcp)
+- n8n guide for connecting Codex CLI: [docs.n8n.io/advanced-ai/accessing-n8n-mcp-server/](https://docs.n8n.io/advanced-ai/accessing-n8n-mcp-server/)
+- OpenAI overview of Codex: [help.openai.com/en/articles/11369540-codex-in-chatgpt](https://help.openai.com/en/articles/11369540-codex-in-chatgpt)

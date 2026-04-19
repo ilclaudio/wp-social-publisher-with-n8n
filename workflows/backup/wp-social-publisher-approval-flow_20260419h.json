@@ -88,7 +88,7 @@
       "name": "Initial Block Notes",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [192, -128]
+      "position": [180, -120]
     },
     {
       "parameters": {
@@ -101,7 +101,7 @@
       "name": "AI Message Notes",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [1744, -128]
+      "position": [1740, -120]
     },
     {
       "parameters": {
@@ -114,7 +114,7 @@
       "name": "Approved Notes",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [2624, 448]
+      "position": [2820, -140]
     },
     {
       "parameters": {
@@ -127,20 +127,7 @@
       "name": "Has Image Notes",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [3264, -368]
-    },
-    {
-      "parameters": {
-        "content": "## Maintenance branch\nQuesto piccolo ramo non pubblica nulla sui social.\n\n`Clear Dedupe History` cancella la memoria interna usata da `Deduplicate via Data Store`, cosi' il workflow puo' considerare di nuovo come \"nuovi\" anche post WordPress gia' elaborati in passato.\n\nServe solo per debug o test controllati.",
-        "height": 240,
-        "width": 430,
-        "color": 3
-      },
-      "id": "note-clear-dedupe-history",
-      "name": "Clear History Notes",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [520, 760]
+      "position": [3220, -180]
     },
     {
       "parameters": {

@@ -39,13 +39,12 @@ Questa chiave corrisponde alla variabile `WSPAF_N8N_API_KEY` usata dagli script 
 
 ### 3. Configurare il server MCP in Claude Code
 
-Ci sono tre modalità alternative: sceglierne una è sufficiente, non è necessario combinarle.
+Ci sono due modalità alternative: sceglierne una è sufficiente, non è necessario combinarle.
 
 | Scope | Metodo | Disponibile in |
 |---|---|---|
 | **Progetto** | File `.mcp.json` nella root del repository | Solo quel progetto |
-| **Locale** | `.claude/settings.local.json` nella root del progetto | Solo quel progetto, non versionato |
-| **Utente (globale)** | Comando CLI `claude mcp add --scope user` | Tutti i progetti |
+| **Utente (globale)** | Comando CLI `claude mcp add --scope user` (salvato in `~/.claude.json`) | Tutti i progetti |
 
 **Opzione A — Progetto (`.mcp.json`):**
 
@@ -75,7 +74,7 @@ claude mcp add --scope user n8n-mcp --transport http "https://n8n.miosito.org/mc
 
 > Note sulla configurazione utente:
 > - `C:\Users\<utente>\.claude\settings.json` **non supporta** il campo `mcpServers`.
-> - `C:\Users\<utente>\.claude.json` contiene le credenziali di autenticazione Claude, non la config MCP.
+> - `C:\Users\<utente>\.claude.json` contiene la config MCP a scope locale e utente (non è solo per le credenziali di autenticazione).
 > - Il file `.mcp.json` **non viene letto** dalla home di Windows: funziona solo nella root del progetto.
 
 ### 4. Verificare la connessione
@@ -112,7 +111,7 @@ Il progetto usa due credenziali distinte che non interferiscono tra loro:
 
 | Credenziale | Dove si configura | Scopo |
 |---|---|---|
-| `WSPAF_N8N_API_KEY` | Variabile d'ambiente locale (`.env`) | Script di deploy e chiamate REST |
+| `WSPAF_N8N_API_KEY` | Variabile d'ambiente a livello macchina (`setx ... /M`) | Script di deploy e chiamate REST |
 | JWT Bearer MCP | `.mcp.json` o config utente Claude Code | Connessione Claude Code ↔ n8n |
 
 Entrambi i file che contengono questi valori (`.env` e `.mcp.json`) sono esclusi dal `.gitignore`. Se il token MCP viene compromesso, rigeneralo da **Settings → MCP** su n8n e aggiorna la configurazione locale.

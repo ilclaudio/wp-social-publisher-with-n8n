@@ -11,8 +11,8 @@ When a new post is published on a WordPress site, the workflow:
 3. Generates a short social message via OpenAI (max 280 chars, `#n8n` hashtag, post language)
 4. Sends an approval email with post details and the AI-generated text
 5. Waits for a human decision (up to 24 hours):
-   - **Pubblica** → publishes the tweet (with image if available)
-   - **Non pubblicare** or no response → skips publication
+   - **Publish** → publishes the tweet (with image if available)
+   - **Do not publish** or no response → skips publication
 6. Sends a confirmation email with the outcome
 
 ## Prerequisites
@@ -36,6 +36,7 @@ scripts/
   deploy.ps1  # deploys the active workflow to n8n via REST API
 AGENTS/       # instructions and context for AI assistants
 DOC/          # setup guides and notes
+assets/       # images and screenshots
 ```
 
 ## Setup

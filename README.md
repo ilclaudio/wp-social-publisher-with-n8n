@@ -211,17 +211,19 @@ This workflow uses two separate X credentials because media upload and tweet cre
 
 ## Deploy procedure
 
-The deploy script (`scripts/deploy.ps1`) updates the existing remote workflow in place.
+`scripts/deploy.ps1` is the only deploy tool in this repository. It pushes the local workflow JSON to an existing n8n workflow via the n8n REST API.
 
-Steps performed automatically:
-1. Resolve credential IDs from the target n8n instance via `GET /api/v1/credentials`
-2. Find the remote workflow by canonical name
-3. Load the local workflow from `workflows/active/`
-4. Inject resolved credential IDs into the payload
-5. Send a `PUT` request to update the remote workflow
-6. Verify the remote state reflects the changes
+**What it does, step by step:**
 
-Never hardcode credential IDs in the source file — they are instance-specific and resolved at deploy time.
+1. Reads `WSPAF_N8N_BASE_URL` and `WSPAF_N8N_API_KEY` from machine-level environment variables.
+2. Calls `GET /api/v1/credentials` on the target n8n instance and resolves the IDs of the four required credentials by name (`OpenAI account`, `SMTP Account`, `X OAuth account`, `X OAuth2 account`).
+3. Calls `GET /api/v1/workflows` and finds the remote workflow named `WP Social Publisher Approval Flow`.
+4. Loads `workflows/active/wp-social-publisher-approval-flow.json` from disk.
+5. Injects the resolved credential IDs into the matching nodes in the payload (credential IDs are instance-specific and must never be hardcoded in the source file).
+6. Sends a `PUT /api/v1/workflows/{id}` request to overwrite the remote workflow with the local one.
+7. Fetches the workflow back from the server and verifies that key nodes are present.
+
+**Prerequisite:** the workflow must already exist on the n8n instance with the exact name above (see [step 4 of Setup](#4-create-the-workflow-in-n8n-for-the-first-time)). The script updates an existing workflow — it does not create one.
 
 ---
 

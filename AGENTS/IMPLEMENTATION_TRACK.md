@@ -1,7 +1,7 @@
 # Implementation Track — WP Social Publisher Approval Flow
 
 ## 1) Project Objective
-Build an n8n automation that publishes notifications for new posts from a WordPress site to social channels with explicit approval gating by email before publishing. The workflow must check for new posts every hour (and on manual test trigger), identify new posts by publication date (`date_gmt`) with deduplication in n8n Data Store, process each new post, generate a social message with AI (max 280 characters), include hashtag `#n8n`, and publish only after approval.
+Build an n8n automation that publishes notifications for new posts from a WordPress site to X (Twitter) with explicit approval gating by email before publishing. The workflow must check for new posts once per day at 06:00 (and on manual test trigger), identify new posts by publication date (`date_gmt`) with deduplication in n8n Data Store, process each new post, generate a social message with AI (max 280 characters), include hashtag `#n8n`, and publish only after approval.
 
 - Problem solved: manual and repetitive social publishing after WordPress post publication.
 - Target users: site owner/editor managing social publication from a single workflow.
@@ -18,7 +18,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
   - WordPress REST API (source)
   - OpenAI (AI text generation)
   - SMTP authenticated server (approval emails)
-  - Social platform nodes/APIs (Twitter/X, Telegram, Instagram, Facebook)
+  - Social platform nodes/APIs (Twitter/X)
 - Infrastructure constraints:
   - Project env vars must use the `WSPAF_` prefix.
   - Development environment vars: `WSPAF_N8N_BASE_URL`, `WSPAF_N8N_API_KEY`.
@@ -27,7 +27,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 - Approval recipient email must come from environment variable `WSPAF_APPROVAL_EMAIL`.
 - Approval recipient display name must come from environment variable `WSPAF_APPROVAL_NAME`.
 - Approval sender email must come from environment variable `WSPAF_SENDER_EMAIL`.
-  - Polling schedule: every hour.
+  - Polling schedule: once per day at 06:00.
   - Trigger strategy: dual trigger in n8n (`Schedule Trigger` + `Manual Trigger` for tests).
 - Security/compliance constraints:
   - No username/password/token/API key in repository, Markdown, workflow JSON, or source files.
@@ -39,11 +39,11 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
   - If approval is rejected, action is `skip` (no publish).
   - New post detection must use WordPress publication date (`date_gmt`).
   - Processed posts must be deduplicated with persistent n8n Data Store state keyed by WordPress post ID.
-  - Build and release incrementally by channel priority: Twitter/X, Telegram, Instagram, Facebook.
+  - Current release scope: Twitter/X only. Future channels can be tracked outside the active scope.
 
 ## 3) Features (Text Backlog)
-### Feature 1 - Hourly + Manual WordPress New Post Detection
-- Description: on hourly schedule and manual test trigger, query WordPress using environment variable `WSPAF_WP_SITE_URL` and detect newly published posts using `date_gmt`, then filter already-processed items via n8n Data Store.
+### Feature 1 - Daily + Manual WordPress New Post Detection
+- Description: on daily schedule at 06:00 and manual test trigger, query WordPress using environment variable `WSPAF_WP_SITE_URL` and detect newly published posts using `date_gmt`, then filter already-processed items via n8n Data Store.
 - User value: automatic discovery of new content with no manual checks.
 - Expected inputs: environment variable `WSPAF_WP_SITE_URL`, last processed publication marker, n8n Data Store processed-IDs set.
 - Expected outputs: list of new posts to process or empty list.
@@ -51,7 +51,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 - Priority: MVP
 - Status: done
 - Acceptance criteria:
-  1. Scheduler runs every hour and manual trigger can run on-demand for tests.
+  1. Scheduler runs once per day at 06:00 and manual trigger can run on-demand for tests.
   2. Detection uses WordPress `date_gmt` as the primary new-post criterion.
   3. If no new posts, workflow stops cleanly.
   4. If new posts exist, each post enters processing loop only once (Data Store dedup).
@@ -95,8 +95,8 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
   2. Validate char count and hashtag.
   3. Validate topic relevance.
 
-### Feature 4 - Approval Email Workflow per Channel
-- Description: send approval request emails (Twitter/X, Telegram, Instagram, Facebook) to one recipient from environment variables.
+### Feature 4 - Approval Email Workflow for X
+- Description: send approval request emails for Twitter/X to one recipient from environment variables.
 - User value: editorial control before publishing.
 - Expected inputs: generated message + post media/link + `WSPAF_APPROVAL_EMAIL` + `WSPAF_APPROVAL_NAME` + `WSPAF_SENDER_EMAIL`.
 - Expected outputs: approval decision per channel (approve/reject).
@@ -104,7 +104,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 - Priority: MVP
 - Status: done
 - Acceptance criteria:
-  1. One approval request is sent per channel.
+  1. One approval request is sent for the X publication path.
   2. Recipient is read from environment variables.
   3. Decision result is captured in workflow state.
 - Minimum manual test:
@@ -119,7 +119,7 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
 - Expected outputs: published post/tweet or skipped action.
 - Dependencies: Twitter/X credential in n8n.
 - Priority: MVP
-- Status: in-progress
+- Status: done
 - Acceptance criteria:
   1. Approve => publishes once.
   2. Reject => skip with no publication.
@@ -129,73 +129,15 @@ Build an n8n automation that publishes notifications for new posts from a WordPr
   2. Reject case.
   3. Validate published payload.
 
-### Feature 6 - Conditional Publishing to Telegram
-- Description: publish to Telegram only when approved.
-- User value: second priority channel.
-- Expected inputs: approved decision + message + URL + image.
-- Expected outputs: Telegram message sent or skipped.
-- Dependencies: Telegram credential in n8n.
-- Priority: v1
-- Status: todo
-- Acceptance criteria:
-  1. Approve => message sent once.
-  2. Reject => skip.
-  3. Message includes URL and `#n8n`.
-- Minimum manual test:
-  1. Approve case.
-  2. Reject case.
-  3. Validate final message structure.
-
-### Feature 7 - Conditional Publishing to Instagram
-- Description: publish to Instagram only when approved.
-- User value: third priority channel.
-- Expected inputs: approved decision + message + image/link.
-- Expected outputs: Instagram publication or skipped action.
-- Dependencies: Instagram/Facebook Meta credential in n8n.
-- Priority: v2
-- Status: todo
-- Acceptance criteria:
-  1. Approve => publish.
-  2. Reject => skip.
-  3. Channel format constraints are handled.
-- Minimum manual test:
-  1. Approve case.
-  2. Reject case.
-  3. Validate visible result on target account.
-
-### Feature 8 - Conditional Publishing to Facebook
-- Description: publish to Facebook only when approved.
-- User value: fourth priority channel.
-- Expected inputs: approved decision + message + image/link.
-- Expected outputs: Facebook publication or skipped action.
-- Dependencies: Facebook/Meta credential in n8n.
-- Priority: v2
-- Status: todo
-- Acceptance criteria:
-  1. Approve => publish.
-  2. Reject => skip.
-  3. Message includes URL and `#n8n`.
-- Minimum manual test:
-  1. Approve case.
-  2. Reject case.
-  3. Validate post payload.
-
 ## 4) Priorities and Releases
 Group features by milestone.
 
 ### MVP
-- [ ] Feature 1 - Hourly + Manual WordPress New Post Detection
+- [ ] Feature 1 - Daily + Manual WordPress New Post Detection
 - [ ] Feature 2 - Post Data Extraction
 - [ ] Feature 3 - AI Message Generation
 - [ ] Feature 4 - Approval Email Workflow
-- [ ] Feature 5 - Conditional Publishing to Twitter/X
-
-### v1
-- [ ] Feature 6 - Conditional Publishing to Telegram
-
-### v2
-- [ ] Feature 7 - Conditional Publishing to Instagram
-- [ ] Feature 8 - Conditional Publishing to Facebook
+- [x] Feature 5 - Conditional Publishing to Twitter/X
 
 ## 5) Step-by-Step Implementation Plan
 Break work into small, sequential, and verifiable tasks.
@@ -230,7 +172,7 @@ Use both markers for each step:
 - Completed on: 2026-02-23
 
 ### Step 2 - MVP Skeleton (Detection + Extraction + AI + Approval + Twitter/X)
-- [ ] Step completion
+- [x] Step completion
 - Objective: deliver first end-to-end publish flow for Twitter/X with approval gate.
 - Activities:
   1. Implement Features 1-4 (dual trigger check, `date_gmt` detection, Data Store dedup, extraction, AI generation, email approval).
@@ -238,7 +180,7 @@ Use both markers for each step:
   3. Validate no-op, reject-skip, approve-publish scenarios.
 - Progress:
   - [x] Task 1 completed on 2026-02-23 (created MVP draft workflow skeleton in `workflows/draft/wp-social-publisher-approval-flow-mvp.json`)
-  - [x] Task 2 completed on 2026-02-23 (configured dual trigger: `Manual Trigger` + `Schedule Trigger (Hourly)` every 1 hour)
+  - [x] Task 2 completed on 2026-02-23 and later aligned to current scope on 2026-04-19 (configured dual trigger: `Manual Trigger` + daily `Schedule Trigger` at 06:00)
   - [x] Task 3 completed on 2026-02-23 (implemented `Detect New Posts (date_gmt)` with WordPress REST fetch + UTC `date_gmt` filter window in workflow JSON and deployed to n8n)
   - [x] Task 4 completed on 2026-04-13 (aligned workflow runtime configuration to environment variables and prepared server-side `WSPAF_*` usage)
   - [x] Task 5 completed on 2026-04-13 (implemented `Extract URL and Featured Image` using WordPress `_embedded` featured media data and normalized payload fields)
@@ -248,35 +190,9 @@ Use both markers for each step:
   - [x] Task 9 completed on 2026-04-19 (implemented Feature 5: added `Has Image? (Twitter)` If node, `Fetch Image Binary` HTTP Request, `Upload Media to Twitter` HTTP Request to `upload.twitter.com/1.1/media/upload.json` with OAuth1, `Post Tweet with Image` and `Post Tweet` HTTP Request nodes to `https://api.twitter.com/2/tweets` with JSON body; all Twitter nodes use `twitterOAuth1Api` / `X OAuth account`; native Twitter node avoided because its UI picker requires `twitterOAuth2Api`; v1.1 `statuses/update` deprecated — using v2 for tweet creation; routing fix: `Has Image?` reads `hasFeaturedImage` from `$('Validate AI Message').item.json` because `sendAndWait` replaces `$json` with approval data)
 - Definition of done: one approved WordPress post is published on Twitter/X.
 - Expected output: stable MVP workflow in n8n and JSON aligned to repository standards.
-- Status: in-progress
+- Status: done
 - Started on: 2026-02-23
-- Completed on: YYYY-MM-DD
-
-### Step 3 - Add Telegram Channel
-- [ ] Step completion
-- Objective: extend approved publication to Telegram.
-- Activities:
-  1. Implement Feature 6.
-  2. Reuse existing approval pattern.
-  3. Run approve/reject tests.
-- Definition of done: approved posts are published to Telegram.
-- Expected output: v1 channel extension validated.
-- Status: todo | in-progress | done | blocked
-- Started on: YYYY-MM-DD
-- Completed on: YYYY-MM-DD
-
-### Step 4 - Add Instagram and Facebook Channels
-- [ ] Step completion
-- Objective: complete all planned social destinations.
-- Activities:
-  1. Implement Feature 7 (Instagram).
-  2. Implement Feature 8 (Facebook).
-  3. Validate platform-specific payload constraints.
-- Definition of done: approved posts can be published across all target channels.
-- Expected output: v2 multi-channel completion.
-- Status: todo | in-progress | done | blocked
-- Started on: YYYY-MM-DD
-- Completed on: YYYY-MM-DD
+- Completed on: 2026-04-19
 
 ## 6) Risks and Dependencies
 
@@ -311,10 +227,10 @@ Use both markers for each step:
   - Type (technical/vendor).
   - Potential blocker: email delivery latency/failures.
   - Backup plan: retry queue and operational alert.
-- Dependency: social APIs (X, Telegram, Meta).
+- Dependency: social APIs (X).
   - Type (technical/vendor).
   - Potential blocker: auth/policy/rate changes.
-  - Backup plan: isolate per-channel failures and continue others.
+  - Backup plan: isolate X publication failures and notify by email.
 
 ## 7) Operational Rules for Implementation
 Use these rules to keep this file as the single development track.

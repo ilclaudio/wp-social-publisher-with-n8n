@@ -20,3 +20,9 @@ Da definire:
 - pagina/profilo target
 - formato post link vs immagine + testo
 - credenziali Meta/n8n richieste
+
+4) Pubblicazione su Linkedin.
+5) Possibilità di modificare il testo del post rispondendo alla e-mail invece che cliccando su Pubblica o Non pubblicare.
+6) Possibilità di personalizzare i template delle e-mail.
+7) Possibilità di fare generare una immagine alla AI se l’articolo non ha featured image.
+8) Personalizzazione della frequenza con cui il flusso è schedulato.

@@ -15,6 +15,8 @@ When a new post is published on a WordPress site, the workflow:
    - **Do not publish** or no response → skips publication
 6. Sends a confirmation email with the outcome
 
+![Flow schema](assets/img/FlowSchema.png)
+
 ## Prerequisites
 
 Before setting up this workflow you need:

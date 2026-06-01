@@ -15,6 +15,8 @@ Quando un nuovo articolo viene pubblicato su un sito WordPress, il workflow:
    - **Do not publish** oppure nessuna risposta → salta la pubblicazione
 6. Invia un'email di conferma con l'esito
 
+![Schema del flusso](assets/img/FlowSchema.png)
+
 ## Prerequisiti
 
 Prima di configurare questo workflow ti servono:
